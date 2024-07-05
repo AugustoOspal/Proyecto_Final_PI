@@ -1,0 +1,45 @@
+@startuml
+
+class newYorkTicket
+{
+    plate
+    issueDate
+    infraccionId
+    fineAmount
+    issuingAgency
+}
+
+class infractionsNYC
+{
+    id
+    description
+}
+
+class chicagoTicket
+{
+    issueDate
+    plateRedacted
+    unitDescription
+    infractionCode
+    fineLevel1Amount
+}
+
+class infractionsCHI
+{
+    id
+    description
+}
+
+class ticket
+{
+    plate
+    date
+    fine
+    infrectionId
+    Agency
+}
+
+newYorkTicket -- infractionsNYC
+chicagoTicket -- infractionsCHI
+
+@enduml
