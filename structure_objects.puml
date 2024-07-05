@@ -4,7 +4,7 @@ class newYorkTicket
 {
     plate
     issueDate
-    infraccionId
+    infractionId
     fineAmount
     issuingAgency
 }
@@ -35,7 +35,7 @@ class ticket
     plate
     date
     fine
-    infrectionId
+    infractionId
     Agency
 }
 
