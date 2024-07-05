@@ -1,8 +1,14 @@
 @startwbs
 
 * main
-** querry1
-** querry2
-** querry2
+
+** Backend
+*** exportToTicket
+*** querry1
+*** querry2
+*** querry2
+
+** Frontend
+*** validComandLine
 
 @endwbs

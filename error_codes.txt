@@ -1,1 +1,2 @@
 1:  Incorrect number of input files
+2:  There's at least one empty file
