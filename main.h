@@ -15,6 +15,6 @@
 
 // Error messages
 #define ERROR_NUMBER_INPUT_FILES_M "Incorrect number of input files"
-#define ERROR_EMPTY_FILE_M "Theres at least one empty file"
+#define ERROR_EMPTY_FILE_M "There's at least one empty file"
 
 #endif //PROYECTO_FINAL_PI_MAIN_H
