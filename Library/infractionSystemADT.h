@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
-typedef struct ticketCDT *ticketADT;
+typedef struct infractionSystemCDT *infractionSystemADT;
+
+
 
 #endif //PROYECTO_FINAL_PI_TICKETSADT_H
