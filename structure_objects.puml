@@ -53,6 +53,7 @@ class city
 class car
 {
     char * plate
+    size_t counter
     car *next
 }
 
