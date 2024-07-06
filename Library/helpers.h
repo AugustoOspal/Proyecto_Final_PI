@@ -8,4 +8,5 @@
 void validateCommandLine(int argc);
 void validateFiles(int argc, char *argv[]);
 
+
 #endif //PROYECTO_FINAL_PI_HELPERS_H
