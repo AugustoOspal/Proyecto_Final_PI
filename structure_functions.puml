@@ -5,6 +5,8 @@
 ** Backend
 *** loadInfractions
 *** exportToTicket
+*** makeNewInfractionSystem
+*** freeInfractionSystem
 *** loadTicket
 **** loadAgency
 **** loadInfraction
