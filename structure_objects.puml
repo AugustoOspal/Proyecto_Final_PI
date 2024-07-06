@@ -37,6 +37,7 @@ class ticket
     char * agency
     size_t fine
     size_t infractionID
+    size_t index
 }
 
 newYorkTicket -- infractionsNYC
@@ -46,24 +47,24 @@ chicagoTicket -- infractionsCHI
 class city
 {
     car cars[]
-    'New York Infraction System
-    infractionSystem NYIS;
+    infractionSystem sytem;
 }
 
 class car
 {
     char * plate
-    'vector of positions for tickets in city
-    size_t tickets[dim]
-    size_t dim
+    car *next
 }
 
 class agency
 {
     char * name
+    size_t len
     'vector of positions for tickets in city
-    size_t tickets[dim]
-    size_t dim
+    size_t qtyTickets
+    size_t tickets[qtyTickets]
+    size_t counterPerInfraction[qtyInfractions]
+    agancy *next
 }
 
 class infraction
@@ -71,19 +72,22 @@ class infraction
     size_t id
     size_t qty
     char * name
+    car *carlist
 }
 
 class infractionSystem
 {
     infraction infractions[]
     ticket tickets[]
-    agency agencies[]
+    agency *agencyList
+    size_t qtyInfractions
+    size_t qtyTickets
+    size_t qtyAgencies
 }
 
-city -- car
-city -- infractionSystem
 infractionSystem -- agency
 infractionSystem -- ticket
 infractionSystem -- infraction
+infraction -- car
 
 @enduml
