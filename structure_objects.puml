@@ -32,14 +32,58 @@ class infractionsCHI
 
 class ticket
 {
-    plate
-    date
-    fine
-    infractionId
-    Agency
+    char * plate
+    char * date
+    char * agency
+    size_t fine
+    size_t infractionID
 }
 
 newYorkTicket -- infractionsNYC
 chicagoTicket -- infractionsCHI
+
+' Ideas
+class city
+{
+    car cars[]
+    'New York Infraction System
+    infractionSystem NYIS;
+}
+
+class car
+{
+    char * plate
+    'vector of positions for tickets in city
+    size_t tickets[dim]
+    size_t dim
+}
+
+class agency
+{
+    char * name
+    'vector of positions for tickets in city
+    size_t tickets[dim]
+    size_t dim
+}
+
+class infraction
+{
+    size_t id
+    size_t qty
+    char * name
+}
+
+class infractionSystem
+{
+    infraction infractions[]
+    ticket tickets[]
+    agency agencies[]
+}
+
+city -- car
+city -- infractionSystem
+infractionSystem -- agency
+infractionSystem -- ticket
+infractionSystem -- infraction
 
 @enduml
