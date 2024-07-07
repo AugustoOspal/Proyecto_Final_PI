@@ -9,9 +9,12 @@
 typedef struct car
 {
     char *plate;
+    char *date;
     size_t counter;
     struct car *next;
 }car;
+
+typedef struct car * carL;
 
 typedef struct infraction
 {
@@ -63,7 +66,7 @@ infractionSystemADT new(){
     return aux;
 }
 
-void addTicket(infractionSystemADT city, char * date, char * plate, char * agency, int fine, int id){
+void addTicket(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id){
     if ( BLOCK_TICKETS % city-> qtyTickets == 0 ){
         city->tickets = realloc(city->tickets,BLOCK_TICKETS * sizeof(ticket));
         // falta hacer cuando realloc no encuentra espacion en memoria
@@ -97,6 +100,7 @@ void space(size_t * aux, size_t qty,size_t idx){
     }
 }
 
+
 agencyL addAgencyRec( agencyL l,char * agency, size_t idx ,size_t id, size_t qtyInfractions, char * flag){
     int compear;
     if ( l == NULL || (compear=strcmp(l->name,agency)) > 0){
@@ -109,9 +113,10 @@ agencyL addAgencyRec( agencyL l,char * agency, size_t idx ,size_t id, size_t qty
         aux->tickets[aux->qtyTickets]=idx;
         aux->qtyTickets++;
 
-        //esperar a rta
+        //REVISAR SE DEJA PARA EL FINAL
         aux->counterPerInfraction=malloc(qtyInfractions * sizeof(size_t));
         aux->counterPerInfraction[id]++;
+       //
 
         aux->next=l;
         *flag=1;
@@ -122,8 +127,10 @@ agencyL addAgencyRec( agencyL l,char * agency, size_t idx ,size_t id, size_t qty
         l->tickets[l->qtyTickets]=idx;
         l->qtyTickets++;
 
-        //esperar a rta
+        //lo mkismo
         l->counterPerInfraction[id]++;
+        //
+
         return l;
     }
 
@@ -132,10 +139,66 @@ agencyL addAgencyRec( agencyL l,char * agency, size_t idx ,size_t id, size_t qty
 
 }
 
-void addAgency(infractionSystemADT city, char * date, char * plate, char * agency, int fine, int id,int idx){
+void addAgency(infractionSystemADT city, char * date, char * plate, char * agency, int fine, size_t id,size_t idx){
     char flag=0;
     city->agencyList = addAgencyRec(city->agencyList,agency,city->tickets[city->qtyTickets-1].index,city->tickets[city->qtyTickets-1].infractionID,city->qtyInfractions,&flag);
     city->qtyAgencies+=flag;
 
 }
 
+int binarySearchRec(infraction arr[], int left, int right, int target) {
+    if (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (arr[mid].id == target) {
+            return mid;
+        }
+
+        if (arr[mid].id < target) {
+            return binarySearchRec(arr, mid + 1, right, target);
+        }
+        else {
+            return binarySearchRec(arr, left, mid - 1, target);
+        }
+    }
+
+    return -1;
+}
+
+carL addCarRec(carL l, char * plate,carL * dir){
+    int compear;
+    if ( l == NULL || (compear=strcmp(l->plate,plate)) > 0 ){
+        carL aux= malloc(sizeof(struct car));
+        aux->plate=malloc(strlen(plate)+1);
+        strcpy(aux->plate,plate);
+        aux->counter++;
+        aux->next=l;
+        *dir=aux;
+        return aux;
+    }
+    if (compear == 0){
+        l->counter++;
+        *dir=l;
+        return l;
+    }
+    l->next=addCarRec(l->next,plate,dir);
+    return l;
+}
+
+void addInfraction(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id){
+    int idx;
+    carL dir;
+    if ( (idx=binarySearchRec(city->infractions,0,city->qtyInfractions,id)) == -1 ){
+        //falta devolver un error
+    }
+    city->infractions[idx].qty++;
+    city->infractions[idx].carList= addCarRec(city->infractions[idx].carList,plate,&dir);
+    if ( city->infractions[idx].biggest == NULL ||  dir->counter > city->infractions[idx].biggest->counter ){
+        city->infractions[idx].biggest=dir;
+    }
+    else if (dir->counter == city->infractions[idx].biggest->counter ){
+        if ( strcmp(dir->plate,city->infractions[idx].biggest->plate) < 0 )
+            city->infractions[idx].biggest=dir;
+    }
+
+}
