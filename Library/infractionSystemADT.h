@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-typedef struct infractionSystemCDT *infractionSystemADT;
+typedef struct infractionSystemCDT * infractionSystemADT;
 
 
 
