@@ -18,10 +18,14 @@ int main(void)
     assert(strcmp(strings[0], "59") == 0);
     assert(strcmp(strings[1], "EXPIRED METER CENTRAL BUSINESS DISTRICT") == 0);
     puts("OK: sectionSort");
+    free(strings);
 
     // loadInfractions
     FILE *file = fopen("../DataSets/infractionsNYC.csv", "r");
     infractionSystemADT system = makeNewInfractionSystem();
     infractionMap map = {0, 1};
     loadInfractions(system, file, map);
+
+    fclose(file);
+    freeInfractionSystem(system);
 }
