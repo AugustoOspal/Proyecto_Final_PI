@@ -17,10 +17,12 @@ int main(int argc, char *argv[])
 #endif
 
     infractionSystemADT city = makeNewInfractionSystem(void);
-    loadTickets(city, argv[1], argv[2]);
+    loadInfractions(city, argv[2]);
+    loadTickets(city, argv[1]);
 
     //Testing
     FILE *file = fopen(argv[1], "r");
     char buffer[2000] = {0};
     printf("%s", fgets(buffer, 2000, file));
+
 }

@@ -23,7 +23,7 @@ typedef struct ticketMap
 typedef struct infractionMap
 {
     size_t id;
-    size_t infraction;
+    size_t infractionName;
     size_t fields;
 }infractionMap;
 
