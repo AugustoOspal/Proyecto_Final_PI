@@ -29,6 +29,7 @@ typedef struct infractionMap
 
 typedef struct infractionSystemCDT *infractionSystemADT;
 
+
 infractionSystemADT makeNewInfractionSystem(void);
 
 int loadTickets(infractionSystemADT system, FILE *tickets, FILE *infractions);
@@ -36,19 +37,6 @@ int loadTickets(infractionSystemADT system, FILE *tickets, FILE *infractions);
 int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map);
 
 void freeInfractionSystem(infractionSystemADT system);
-
-
-/* Auxiliary functions */
-
-char * getLine();
-
-/*
- * Splits string in tokens separated by the characters
- * in the string delimiters
- */
-char ** sectionString(char *string, char *delimiters, size_t *dimVec);
-
-
 
 
 #endif //PROYECTO_FINAL_PI_TICKETSADT_H
