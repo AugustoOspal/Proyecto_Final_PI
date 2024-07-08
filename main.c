@@ -8,20 +8,21 @@ int main(int argc, char *argv[])
     validateFiles(argc, argv);
 
 #if defined(NYC)
-    ticketMap map = {0, 1, 4, 3, 2};
+    ticketMap mapTicket = {0, 1, 4, 3, 2};
+    infractionsMap mapInfraction = {0, 1};
 #elif defined(CHI)
-    ticketMap map = {1, 0, 2, 4, 3};
+    ticketMap mapTicket = {1, 0, 2, 4, 3};
+    infractionsMap mapInfraction = {0, 1};
 #else
     puts(ERROR_INVALID_CITY_CODE_M);
     return ERROR_INVALID_CITY_CODE;
 #endif
 
-    infractionSystemADT city = makeNewInfractionSystem(void);
-    loadInfractions(city, argv[2]);
-    loadTickets(city, argv[1]);
+    FILE *tickets = fopen(argv[1], "r");
+    FILE *infractions = fopen(argv[2], "r");
 
-    //Testing
-    FILE *file = fopen(argv[1], "r");
-    char buffer[2000] = {0};
-    printf("%s", fgets(buffer, 2000, file));
+    infractionSystemADT city = makeNewInfractionSystem(void);
+    loadInfractions(city, infractions, mapInfraction);
+    loadTickets(city, tickets, mapTicket);
+
 }

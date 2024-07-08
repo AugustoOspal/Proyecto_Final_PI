@@ -54,7 +54,6 @@ class car
 class agency
 {
     char * name
-    size_t len
     'vector of positions for tickets in city
     size_t qtyTickets
     size_t tickets[qtyTickets]

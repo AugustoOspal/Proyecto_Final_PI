@@ -32,11 +32,17 @@ typedef struct infractionSystemCDT * infractionSystemADT;
 
 infractionSystemADT makeNewInfractionSystem(void);
 
-int loadTickets(infractionSystemADT system, FILE *tickets, FILE *infractions);
+int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map);
 
 int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map);
 
 void freeInfractionSystem(infractionSystemADT system);
 
+
+void addTicket(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id);
+
+void addAgency(infractionSystemADT city, char * date, char * plate, char * agency, int fine, size_t id,size_t idx);
+
+void addInfraction(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id);
 
 #endif //PROYECTO_FINAL_PI_TICKETSADT_H
