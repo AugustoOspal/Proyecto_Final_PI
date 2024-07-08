@@ -482,8 +482,7 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
-        // Todo: aca no se tendria que hacer un realloc de tickets con qtyTickets?
-
+        system->tickets = realloc(system->tickets, counter * sizeof(ticket));
         free(tokens);
     }
 
