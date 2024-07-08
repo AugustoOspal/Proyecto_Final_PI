@@ -294,27 +294,33 @@ static void initializeInfractions(infractionSystemADT system, infractionCounter 
     }
 }
 
-static size_t binarySearchRec(infraction arr[], size_t dim, size_t target)
+static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
 {
-    // If it's not in the vector
-    if (dim == 0)
+    // Target not found
+    if (high < low)
     {
-        puts(ERROR_INFRACTION_NOT_FOUND_M);
-        exit(ERROR_INFRACTION_NOT_FOUND);
+        return (size_t)-1;
     }
 
-    size_t mid = dim / 2;
-    if (target > arr[mid].id)
+    size_t mid = low + (high - low) / 2;
+
+    // Target found, return its position
+    if (target == arr[mid].id)
     {
-        return binarySearchRec(arr + mid + 1, dim - mid - 1, target);
+        return mid;
     }
 
-    if (target < arr[mid].id)
+    // Search in the left half
+    else if (target < arr[mid].id)
     {
-        return binarySearchRec(arr, mid, target);
+        return binarySearchRec(arr, low, mid - 1, target);
     }
 
-    return mid;
+    // Search in the right half
+    else
+    {
+        return binarySearchRec(arr, mid + 1, high, target);
+    }
 }
 
 static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t infIdx, infractionSystemADT system)
@@ -322,22 +328,20 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
     int cmp;
     size_t id = system->tickets[idx].infractionID;
 
-    if (l == NULL || (cmp = strcmp(l->name,agency)) < 0)
+    if (l == NULL || (cmp = strcmp(l->name,agency)) > 0)
     {
         // Create new node
         agencyList newAgency = malloc(sizeof(struct agency));
         newAgency->name = copyString(agency);
         newAgency->tickets = malloc(BLOCK_TICKETS * sizeof(size_t));
         newAgency->tickets[0] = idx;
-        newAgency->qtyTickets++;
+        newAgency->qtyTickets = 1;
         newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
 
         initializeInfractions(system, newAgency->countInf, id);
 
         newAgency->countInf[infIdx].counter++;
-        newAgency->max->counter = 0;
-        newAgency->max->id = 0;
-        newAgency->max->name = NULL;
+        newAgency->max = &(newAgency->countInf[infIdx]);
 
         newAgency->next = l;
         system->qtyAgencies++;
@@ -378,7 +382,7 @@ void addAgency(infractionSystemADT system, char * agency, size_t idx)
     size_t infIdx, id;
 
     id = system->tickets[idx].infractionID;
-    infIdx = binarySearchRec(system->infractions, system->qtyInfractions, id);
+    infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
 
     system->agencyList = addAgencyRec(system->agencyList, agency, idx, infIdx, system);
 }
@@ -429,7 +433,7 @@ static carList addCarRec(carList l, char * plate, infractionSystemADT system, si
 
 void addInfraction(infractionSystemADT system, char * plate, size_t id)
 {
-    int idx = binarySearchRec(system->infractions, system->qtyInfractions, id);
+    int idx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
 
     system->infractions[idx].qty++;
     system->infractions[idx].carList = addCarRec(system->infractions[idx].carList, plate, system, idx);
@@ -482,9 +486,76 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
-        system->tickets = realloc(system->tickets, counter * sizeof(ticket));
         free(tokens);
     }
 
+    system->tickets = realloc(system->tickets, counter * sizeof(ticket));
     return counter;
 }
+
+// Tester functions
+
+void printInfractions(infractionSystemADT system)
+{
+    for (size_t i = 0; i < system->qtyInfractions; i++)
+    {
+        printf("Infraction ID: %lu\n", system->infractions[i].id);
+        printf("Infraction Name: %s\n", system->infractions[i].name);
+        printf("Infraction Qty: %lu\n", system->infractions[i].qty);
+        printf("Infraction Biggest: %s\n", system->infractions[i].biggest->plate);
+        printf("Infraction Biggest Counter: %lu\n", system->infractions[i].biggest->counter);
+        puts("Car List:");
+        carList aux = system->infractions[i].carList;
+        while (aux)
+        {
+            printf("Plate: %s\n", aux->plate);
+            printf("Counter: %lu\n", aux->counter);
+            aux = aux->next;
+        }
+    }
+}
+
+void printTickets(infractionSystemADT system)
+{
+    for (size_t i = 0; i < system->qtyTickets; i++)
+    {
+        printf("Ticket Plate: %s\n", system->tickets[i].plate);
+        printf("Ticket Date: %s\n", system->tickets[i].date);
+        printf("Ticket Agency: %s\n", system->tickets[i].agency);
+        printf("Ticket Fine: %lu\n", system->tickets[i].fine);
+        printf("Ticket Infraction ID: %lu\n", system->tickets[i].infractionID);
+        printf("Ticket Index: %lu\n", system->tickets[i].index);
+    }
+}
+
+void printAgencies(infractionSystemADT system)
+{
+    for (size_t i = 0; i < system->qtyAgencies; i++)
+    {
+        printf("Agency Name: %s\n", system->agencyList[i].name);
+        printf("Agency Qty Tickets: %lu\n", system->agencyList[i].qtyTickets);
+        printf("Agency Max Infraction: %s\n", system->agencyList[i].max->name);
+        printf("Agency Max Infraction Counter: %lu\n", system->agencyList[i].max->counter);
+        puts("Agency Tickets:");
+        for (size_t j = 0; j < system->agencyList[i].qtyTickets; j++)
+        {
+            printf("Ticket Index: %lu\n", system->agencyList[i].tickets[j]);
+        }
+        puts("Agency Infractions:");
+        for (size_t j = 0; j < system->qtyInfractions; j++)
+        {
+            printf("Infraction ID: %lu\n", system->agencyList[i].countInf[j].id);
+            printf("Infraction Name: %s\n", system->agencyList[i].countInf[j].name);
+            printf("Infraction Counter: %lu\n", system->agencyList[i].countInf[j].counter);
+        }
+    }
+}
+
+void printInfractionSystem(infractionSystemADT system)
+{
+    printInfractions(system);
+    printTickets(system);
+    printAgencies(system);
+}
+
+// End of tester functions

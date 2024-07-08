@@ -14,11 +14,10 @@ void validateFiles(int argc, char *argv[])
     for (size_t i = 1; i < argc; i++)
     {
         FILE *file = fopen(argv[i], "r");
-        if (!argv[i] || !file)
+        if (!file)
         {
-            fclose(file);
             puts(ERROR_EMPTY_FILE_M);
-            exit(2);
+            exit(ERROR_EMPTY_FILE);
         }
 
         fclose(file);

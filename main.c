@@ -8,11 +8,11 @@ int main(int argc, char *argv[])
     validateFiles(argc, argv);
 
 #if defined(NYC)
-    ticketMap mapTicket = {0, 1, 4, 3, 2};
-    infractionMap mapInfraction = {0, 1};
+    ticketMap mapTicket = {0, 1, 4, 3, 2, 5};
+    infractionMap mapInfraction = {0, 1, 2};
 #elif defined(CHI)
-    ticketMap mapTicket = {1, 0, 2, 4, 3};
-    infractionsMap mapInfraction = {0, 1};
+    ticketMap mapTicket = {1, 0, 2, 4, 3, 5};
+    infractionsMap mapInfraction = {0, 1, 2};
 #else
     puts(ERROR_INVALID_CITY_CODE_M);
     return ERROR_INVALID_CITY_CODE;
@@ -24,4 +24,8 @@ int main(int argc, char *argv[])
     infractionSystemADT city = makeNewInfractionSystem();
     loadInfractions(city, infractions, mapInfraction);
     loadTickets(city, tickets, mapTicket);
+
+    fclose(tickets);
+    fclose(infractions);
 }
+
