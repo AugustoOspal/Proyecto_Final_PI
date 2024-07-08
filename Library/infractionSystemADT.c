@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCK_TICKETS 2
-#define BLOCK_IDX 2
+#define BLOCK_TICKETS 500000
+#define BLOCK_IDX 255
 
 
 // ERROR CODES
@@ -113,13 +113,15 @@ static char * copyString(char *string)
         if (counter % BLOCK_IDX == 0)
         {
             dim += BLOCK_IDX;
-            newString = realloc(newString, dim * sizeof(char));
+            newString = realloc(newString, (dim + 1) * sizeof(char));
             checkMemory(newString);
         }
 
         newString[counter] = string[counter];
     }
     newString[counter] = 0;
+    newString = realloc(newString, (counter + 1) * sizeof(char));
+    checkMemory(newString);
     return newString;
 }
 
@@ -478,13 +480,16 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
     while (fgets(buffer, BUFFER_SIZE, ticketsFile))
     {
         tokens = sectionString(buffer, DELIMITER, &qtyTokens);
-        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
-        counter++;
+
         if (qtyTokens != map.fields)
         {
+            printf("Error in line %lu, patente: %s\n", system->qtyTickets, tokens[map.plate]);
             puts(ERROR_INVALID_NUMBER_FIELDS_M);
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
+
+        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
+        counter++;
 
         free(tokens);
     }
