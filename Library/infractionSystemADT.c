@@ -391,11 +391,11 @@ static carList addCarRec(carList l, char * plate, infractionSystemADT system, si
 {
     int cmp;
 
-    if (l == NULL ||(cmp = strcmp(l->plate, plate)) < 0)
+    if (l == NULL ||(cmp = strcmp(l->plate, plate)) > 0)
     {
         carList aux = malloc(sizeof(struct car));
         aux->plate = copyString(plate);
-        aux->counter++;
+        aux->counter = 1;
         aux->next = l;
 
         if (system->infractions[idx].biggest == NULL)
