@@ -296,8 +296,8 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
     char buffer[BUFFER_SIZE], **tokens;
 
     // Skips the first line
-    fgets(buffer, BUFFER_SIZE, infractions);
-    while (fgets(buffer, BUFFER_SIZE, infractions))
+    fgets(buffer, BUFFER_SIZE, ticketsFile);
+    while (fgets(buffer, BUFFER_SIZE, ticketsFile))
     {
         tokens = sectionString(buffer, DELIMITER, &qtyTokens);
         addTicket(system,
