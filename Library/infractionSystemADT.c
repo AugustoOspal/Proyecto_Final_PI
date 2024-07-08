@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCK_TICKETS 1000
-#define BLOCK_IDX 50
+#define BLOCK_TICKETS 2
+#define BLOCK_IDX 2
 
 
 // ERROR CODES
@@ -352,7 +352,7 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
     {
         if (l->qtyTickets % BLOCK_TICKETS == 0)
         {
-            l->tickets = realloc(l->tickets, BLOCK_TICKETS * sizeof(size_t));
+            l->tickets = realloc(l->tickets, (BLOCK_TICKETS + system->qtyTickets) * sizeof(size_t));
             checkMemory(l->tickets);
         }
 
@@ -444,7 +444,7 @@ void addTicket(infractionSystemADT system, char * date, char * plate, char * age
 {
     if (system->qtyTickets % BLOCK_TICKETS == 0)
     {
-        system->tickets = realloc(system->tickets, BLOCK_TICKETS * sizeof(ticket));
+        system->tickets = realloc(system->tickets, (BLOCK_TICKETS + system->qtyTickets) * sizeof(ticket));
         checkMemory(system->tickets);
     }
 

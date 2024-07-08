@@ -1,0 +1,4 @@
+/home/augusto/ITBA/Proyecto_Final_PI/cmake-build-debug/CMakeFiles/compileNYC.dir
+/home/augusto/ITBA/Proyecto_Final_PI/cmake-build-debug/CMakeFiles/runNYC.dir
+/home/augusto/ITBA/Proyecto_Final_PI/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/augusto/ITBA/Proyecto_Final_PI/cmake-build-debug/CMakeFiles/rebuild_cache.dir
