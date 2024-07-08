@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCK_TICKETS 500000
+#define BLOCK_TICKETS 50000
 #define BLOCK_IDX 255
 
 
@@ -49,25 +49,13 @@ typedef struct infractionCounter
 typedef struct agency
 {
     char *name;
-    size_t len;
     size_t qtyTickets;
-    size_t *tickets;
     infractionCounter *countInf;
     infractionCounter *max;
     struct agency *next;
 }agency;
 
 typedef struct agency * agencyList;
-
-typedef struct ticket
-{
-    char *plate;
-    char *date;
-    char *agency;
-    size_t fine;
-    size_t infractionID;
-    size_t index;
-}ticket;
 
 typedef struct infractionSystemCDT
 {
@@ -88,8 +76,6 @@ typedef struct infractionNode
     car *biggest;
     struct infractionNode *tail;
 }infractionNode;
-
-
 
 typedef struct infractionNode *infractionList;
 
@@ -176,7 +162,6 @@ static void freeAgencyList(agencyList list)
     {
         freeAgencyList(list->next);
         free(list->name);
-        free(list->tickets);
         free(list->countInf);
         free(list);
     }
@@ -274,14 +259,6 @@ void freeInfractionSystem(infractionSystemADT system)
     free(system->infractions);
 
     freeAgencyList(system->agencyList);
-
-    for (size_t i = 0; i < system->qtyTickets; i++)
-    {
-        free(system->tickets[i].plate);
-        free(system->tickets[i].date);
-        free(system->tickets[i].agency);
-    }
-    free(system->tickets);
     
     free(system);
 }
@@ -328,7 +305,6 @@ static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t 
 static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t infIdx, infractionSystemADT system)
 {
     int cmp;
-    size_t id = system->tickets[idx].infractionID;
 
     if (l == NULL || (cmp = strcmp(l->name,agency)) > 0)
     {
@@ -352,22 +328,10 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
 
     if (cmp == 0)
     {
-        if (l->qtyTickets % BLOCK_TICKETS == 0)
-        {
-            l->tickets = realloc(l->tickets, (BLOCK_TICKETS + system->qtyTickets) * sizeof(size_t));
-            checkMemory(l->tickets);
-        }
-
-        l->tickets[l->qtyTickets] = idx;
         l->qtyTickets++;
         l->countInf[infIdx].counter++;
 
-        if (l->countInf[infIdx].counter > l->max->counter)
-        {
-            l->max = &(l->countInf[infIdx]);
-        }
-
-        else if(l->countInf[infIdx].counter == l->max->counter && strcmp(l->countInf[infIdx].name,l->max->name) > 0)
+        if (l->countInf[infIdx].counter > l->max->counter || (l->countInf[infIdx].counter == l->max->counter && strcmp(l->countInf[infIdx].name,l->max->name) > 0))
         {
             l->max = &(l->countInf[infIdx]);
         }
@@ -379,14 +343,10 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
     return l;
 }
 
-void addAgency(infractionSystemADT system, char * agency, size_t idx)
+void addAgency(infractionSystemADT system, char * agency, size_t id)
 {
-    size_t infIdx, id;
-
-    id = system->tickets[idx].infractionID;
-    infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
-
-    system->agencyList = addAgencyRec(system->agencyList, agency, idx, infIdx, system);
+    size_t infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
+    system->agencyList = addAgencyRec(system->agencyList, agency, id, infIdx, system);
 }
 
 static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
@@ -444,23 +404,9 @@ void addInfraction(infractionSystemADT system, char * plate, size_t id)
 
 void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
 {
-    if (system->qtyTickets % BLOCK_TICKETS == 0)
-    {
-        system->tickets = realloc(system->tickets, (BLOCK_TICKETS + system->qtyTickets) * sizeof(ticket));
-        checkMemory(system->tickets);
-    }
-
-    size_t idx = system->qtyTickets;
-
-    system->tickets[idx].plate = copyString(plate);
-    system->tickets[idx].date = copyString(date);
-    system->tickets[idx].agency = copyString(agency);
-    system->tickets[idx].fine = fine;
-    system->tickets[idx].infractionID = id;
-    system->tickets[idx].index = idx;
     system->qtyTickets++;
 
-    addAgency(system, agency, idx);
+    addAgency(system, agency, id);
     addInfraction(system, plate, id);
 }
 
@@ -483,6 +429,7 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 
         if (qtyTokens != map.fields)
         {
+            // todo: borrar esto que era de test
             printf("Error in line %lu, patente: %s\n", system->qtyTickets, tokens[map.plate]);
             puts(ERROR_INVALID_NUMBER_FIELDS_M);
             exit(ERROR_INVALID_NUMBER_FIELDS);
@@ -494,7 +441,6 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
         free(tokens);
     }
 
-    system->tickets = realloc(system->tickets, counter * sizeof(ticket));
     return counter;
 }
 
@@ -517,19 +463,6 @@ void printInfractions(infractionSystemADT system)
             printf("Counter: %lu\n", aux->counter);
             aux = aux->next;
         }
-    }
-}
-
-void printTickets(infractionSystemADT system)
-{
-    for (size_t i = 0; i < system->qtyTickets; i++)
-    {
-        printf("Ticket Plate: %s\n", system->tickets[i].plate);
-        printf("Ticket Date: %s\n", system->tickets[i].date);
-        printf("Ticket Agency: %s\n", system->tickets[i].agency);
-        printf("Ticket Fine: %lu\n", system->tickets[i].fine);
-        printf("Ticket Infraction ID: %lu\n", system->tickets[i].infractionID);
-        printf("Ticket Index: %lu\n", system->tickets[i].index);
     }
 }
 
@@ -559,7 +492,6 @@ void printAgencies(infractionSystemADT system)
 void printInfractionSystem(infractionSystemADT system)
 {
     printInfractions(system);
-    printTickets(system);
     printAgencies(system);
 }
 
