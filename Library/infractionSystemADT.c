@@ -1,5 +1,11 @@
 #include "infractionSystemADT.h"
 
+// ERROR CODES
+#define ERROR_ALLOCATING_MEMORY 1
+#define ERROR_repeatInfraction 4
+
+#define ERROR_ALLOCATING_MEMORY_M "Memory allocation error"
+
 #define BLOCK 50
 
 typedef struct car
@@ -62,10 +68,17 @@ typedef struct infractionNode *infractionList;
 
 /* Auxiliary Functions */
 
-char * copyString(char *string)
+static void checkMemory(void *pointer)
 {
-    // Todo: ver lo del error
+    if (!pointer)
+    {
+        puts(ERROR_ALLOCATING_MEMORY_M);
+        exit(ERROR_ALLOCATING_MEMORY);
+    }
+}
 
+static char * copyString(char *string)
+{
     char *newString = NULL;
     size_t dim = 0, counter;
     for (counter = 0; string[counter]; counter++)
@@ -74,6 +87,7 @@ char * copyString(char *string)
         {
             dim += BLOCK;
             newString = realloc(newString, dim * sizeof(char));
+            checkMemory(newString);
         }
 
         newString[counter] = string[counter];
@@ -82,7 +96,7 @@ char * copyString(char *string)
     return newString;
 }
 
-char ** sectionString(char *string, char *delimiters, size_t *dimVec)
+static char ** sectionString(char *string, char *delimiters, size_t *dimVec)
 {
     size_t counter = 0, dim = 0;
 
@@ -95,8 +109,7 @@ char ** sectionString(char *string, char *delimiters, size_t *dimVec)
         {
             dim += BLOCK;
             tokens = realloc(tokens, dim * sizeof(char *));
-
-            // Todo: Si aca es NULL tiene que dar ERROR
+            checkMemory(tokens);
         }
 
         counter++;
@@ -109,37 +122,13 @@ char ** sectionString(char *string, char *delimiters, size_t *dimVec)
     return tokens;
 }
 
-void printInfractions(infractionSystemADT system)
+static void freeInfractionsList(infractionList list)
 {
-    for (size_t i = 0; i < system->qtyInfractions; i++)
+    if (list)
     {
-        printf("%ld, %s\n", system->infractions[i].id, system->infractions[i].name);
+        freeInfractionsList(list->tail);
+        free(list);
     }
-}
-
-void printList(infractionList list)
-{
-    if (!list)
-        return;
-    printf("%ld, %s\n", list->id, list->name);
-    printList(list->tail);
-}
-
-void freeInfractionsList(infractionList list)
-{
-    if (!list)
-        return;
-    freeInfractionsList(list->tail);
-    free(list->name);
-    free(list);
-}
-
-/* end of auxiliary functions */
-
-infractionSystemADT makeNewInfractionSystem(void)
-{
-    infractionSystemADT newSystem = calloc(1, sizeof(infractionSystemCDT));
-    return newSystem;
 }
 
 static infractionList loadInfraction(infractionList infractionL, size_t id, char *name)
@@ -148,8 +137,7 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
     {
         //Make new node and initialize it
         infractionNode *newNode = malloc(sizeof(infractionNode));
-
-        // Todo: aca hacer algo si no se hace el malloc
+        checkMemory(newNode);
 
         newNode->id = id;
         newNode->name = copyString(name);
@@ -160,24 +148,32 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
         return newNode;
     }
 
-    if (id == infractionL->id)
+    if (id == infractionL->id && strcmp(name, infractionL->name) == 0)
     {
-        // Todo: aca tendria que dar error porque no puede pasar
-        return infractionL;
+        puts("Repeated infraction in the file");
+        exit(4);
     }
 
     infractionL->tail = loadInfraction(infractionL->tail, id, name);
     return infractionL;
 }
 
+/* end of auxiliary functions */
+
+infractionSystemADT makeNewInfractionSystem(void)
+{
+    infractionSystemADT newSystem = calloc(1, sizeof(infractionSystemCDT));
+    return newSystem;
+}
+
 // The file must be open in read
 // IMPORTANT: this function must be called before loadTickets
 int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map)
 {
-    // Todo: Aca tendria que dar error
     if (!system)
     {
-        return 0;
+        puts("Invalid system");
+        exit(3);
     }
 
     size_t qtyTokens, counter = 0;
@@ -192,11 +188,14 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
         tokens = sectionString(buffer, DELIMITER, &qtyTokens);
         infractionsL = loadInfraction(infractionsL, atoi(tokens[map.id]), tokens[map.infractionName]);
         counter++;
+
+        free(tokens);
     }
 
     infraction *infractionVec = malloc(sizeof(infraction) * counter);
-    // Todo: Aca tendria que dar error si es NULL
+    checkMemory(infractionVec);
 
+    infractionList aux = infractionsL;
     for (size_t i = 0; i < counter; i++)
     {
         infractionVec[i].id = infractionsL->id;
@@ -207,8 +206,7 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
         infractionsL = infractionsL->tail;
     }
 
-    free(tokens);
-    freeInfractionsList(infractionsL);
+    freeInfractionsList(aux);
 
     system->qtyInfractions = counter;
     system->infractions = infractionVec;
