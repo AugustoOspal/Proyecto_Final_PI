@@ -6,13 +6,15 @@
 #define BLOCK_TICKETS 1000
 #define BLOCK_IDX 50
 
+
 // ERROR CODES
 #define ERROR_ALLOCATING_MEMORY 1
-#define ERROR_repeatInfraction 4
+#define ERROR_REPEATED_INFRACTION 2
+#define ERROR_INVALID_SYSTEM 3
 
 #define ERROR_ALLOCATING_MEMORY_M "Memory allocation error"
-
-#define BLOCK 50
+#define ERROR_REPEATED_INFRACTION_M "Repeated infraction with different name"
+#define ERROR_INVALID_SYSTEM_M "Invalid system"
 
 typedef struct car
 {
@@ -93,9 +95,9 @@ static char * copyString(char *string)
     size_t dim = 0, counter;
     for (counter = 0; string[counter]; counter++)
     {
-        if (counter % BLOCK == 0)
+        if (counter % BLOCK_IDX == 0)
         {
-            dim += BLOCK;
+            dim += BLOCK_IDX;
             newString = realloc(newString, dim * sizeof(char));
             checkMemory(newString);
         }
@@ -115,9 +117,9 @@ static char ** sectionString(char *string, char *delimiters, size_t *dimVec)
     token = strtok(string, delimiters);
     for (size_t i = 0; token; i++)
     {
-        if (counter % BLOCK == 0)
+        if (counter % BLOCK_IDX == 0)
         {
-            dim += BLOCK;
+            dim += BLOCK_IDX;
             tokens = realloc(tokens, dim * sizeof(char *));
             checkMemory(tokens);
         }
@@ -160,8 +162,8 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
 
     if (id == infractionL->id && strcmp(name, infractionL->name) == 0)
     {
-        puts("Repeated infraction in the file");
-        exit(4);
+        puts(ERROR_REPEATED_INFRACTION_M);
+        exit(ERROR_REPEATED_INFRACTION);
     }
 
     infractionL->tail = loadInfraction(infractionL->tail, id, name);
@@ -182,8 +184,8 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
 {
     if (!system)
     {
-        puts("Invalid system");
-        exit(3);
+        puts(ERROR_INVALID_SYSTEM_M);
+        exit(ERROR_INVALID_SYSTEM);
     }
 
     size_t qtyTokens, counter = 0;
