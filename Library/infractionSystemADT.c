@@ -54,7 +54,7 @@ typedef struct agency
     size_t qtyTickets;
     size_t *tickets;
     infractionCounter *countInf;
-    infractionCounter max;
+    infractionCounter *max;
     struct agency *next;
 }agency;
 
@@ -315,6 +315,59 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
         free(tokens);
     }
 }
+
+static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
+{
+    int cmp;
+
+    if (l == NULL ||(cmp = strcmp(l->plate, plate)) < 0)
+    {
+        carList aux = malloc(sizeof(struct car));
+        aux->plate = copyString(plate);
+        aux->counter++;
+        aux->next = l;
+
+        if (system->infractions[idx].biggest == NULL)
+        {
+            system->infractions[idx].biggest = aux;
+        }
+
+        else if(aux->counter == system->infractions[idx].biggest->counter && strcmp(aux->plate,system->infractions[idx].biggest->plate) < 0)
+        {
+            system->infractions[idx].biggest = aux;
+        }
+        return aux;
+    }
+
+    if (cmp == 0)
+    {
+        l->counter++;
+
+        if (l->counter > system->infractions[idx].biggest->counter)
+        {
+            system->infractions[idx].biggest = l;
+        }
+
+        else if(l->counter == system->infractions[idx].biggest->counter && strcmp(l->plate,system->infractions[idx].biggest->plate) < 0)
+        {
+            system->infractions[idx].biggest = l;
+        }
+
+        return l;
+    }
+
+    l->next = addCarRec(l->next, plate,system,idx);
+    return l;
+}
+
+void addInfraction(infractionSystemADT system, char * plate, size_t id)
+{
+    int idx = binarySearchRec(system->infractions, system->qtyInfractions, id);
+
+    system->infractions[idx].qty++;
+    system->infractions[idx].carList = addCarRec(system->infractions[idx].carList, plate, system, idx);
+}
+
 
 void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
 {
