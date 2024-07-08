@@ -12,11 +12,13 @@
 #define ERROR_REPEATED_INFRACTION 2
 #define ERROR_INVALID_SYSTEM 3
 #define ERROR_INFRACTION_NOT_FOUND 4
+#define ERROR_INVALID_NUMBER_FIELDS 5
 
 #define ERROR_ALLOCATING_MEMORY_M "Memory allocation error"
 #define ERROR_REPEATED_INFRACTION_M "Repeated infraction with different name"
 #define ERROR_INVALID_SYSTEM_M "Invalid system"
 #define ERROR_INFRACTION_NOT_FOUND_M "Infraction not found"
+#define ERROR_INVALID_NUMBER_FIELDS_M "Invalid number of fields"
 
 typedef struct car
 {
@@ -300,13 +302,15 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
     while (fgets(buffer, BUFFER_SIZE, ticketsFile))
     {
         tokens = sectionString(buffer, DELIMITER, &qtyTokens);
-        addTicket(system,
-                  tokens[map.date],
-                  tokens[map.plate],
-                  tokens[map.agency],
-                  atoi(tokens[map.fine]),
-                  atoi(tokens[map.infractionID]));
+        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
         counter++;
+        if (qtyTokens != map)
+        {
+            puts(ERROR_INVALID_NUMBER_FIELDS_M);
+            exit(ERROR_INVALID_NUMBER_FIELDS);
+        }
+
+        // Todo: aca no se tendria que hacer un realloc de tickets con qtyTickets?
 
         free(tokens);
     }
@@ -314,7 +318,7 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 
 void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
 {
-    if (system-> qtyTickets % BLOCK_TICKETS == 0)
+    if (system->qtyTickets % BLOCK_TICKETS == 0)
     {
         system->tickets = realloc(system->tickets, BLOCK_TICKETS * sizeof(ticket));
         checkMemory(system->tickets);
@@ -359,7 +363,7 @@ static void initializeInfractions(infractionSystemADT system, infractionCounter 
     }
 }
 
-static agencyList addAgencyRec( agencyList l,char * agency, size_t idx ,size_t id,infractionSystemADT system ,int infIdx,char * flag)
+static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t id,infractionSystemADT system, int infIdx, char * flag)
 {
     int compear;
     if (l == NULL || (compear = strcmp(l->name,agency)) > 0)
@@ -399,13 +403,36 @@ static agencyList addAgencyRec( agencyList l,char * agency, size_t idx ,size_t i
 
 }
 
+static size_t binarySearchRec(infraction arr[], size_t dim, size_t target)
+{
+    // If it's not in the vector
+    if (dim == 0)
+    {
+        puts(ERROR_INFRACTION_NOT_FOUND_M);
+        exit(ERROR_INFRACTION_NOT_FOUND);
+    }
+
+    size_t mid = dim / 2;
+    if (target > arr[mid].id)
+    {
+        return binarySearchRec(arr + mid + 1, dim - mid - 1, target);
+    }
+
+    if (target < arr[mid].id)
+    {
+        return binarySearchRec(arr, mid, target);
+    }
+
+    return mid;
+}
+
 void addAgency(infractionSystemADT system, char * date, char * plate, char * agency, int fine, size_t id,size_t idx) {
     char flag = 0;
+
     int infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions, id);
-    system->agencyList = addAgencyRec(system->agencyList, agency, system->tickets[system->qtyTickets - 1].index,
-                                      system->tickets[system->qtyTickets - 1].infractionID, system, infIdx,
-                                      &flag);
+    system->agencyList = addAgencyRec(system->agencyList, agency, system->tickets[system->qtyTickets - 1].index, system->tickets[system->qtyTickets - 1].infractionID, system, infIdx, &flag);
     system->qtyAgencies += flag;
+
     if (!system->agencyList->max || system->agencyList->countInf[infIdx].counter > system->agencyList->max->counter)
     {
         system->agencyList->max->counter = system->agencyList->countInf[infIdx].counter;
@@ -413,37 +440,12 @@ void addAgency(infractionSystemADT system, char * date, char * plate, char * age
         system->agencyList->max->name = (system->infractions[infIdx].name);
     }
     
-    elseif(system->agencyList->countInf[infIdx].counter == system->agencyList->max->counter && strcmp(system->agencyList->countInf[infIdx].name,system->agencyList->max->name) > 0)
+    else if(system->agencyList->countInf[infIdx].counter == system->agencyList->max->counter && strcmp(system->agencyList->countInf[infIdx].name,system->agencyList->max->name) > 0)
     {
         system->agencyList->max->counter = system->agencyList->countInf[infIdx].counter;
         system->agencyList->max->id = system->agencyList->countInf[infIdx].id;
         system->agencyList->max->name = system->infractions[infIdx].name;
     }
-}
-
-static int binarySearchRec(infraction arr[], int left, int right, int target)
-{
-    if (left <= right) 
-    {
-        int mid = left + (right - left) / 2;
-
-        if (arr[mid].id == target) 
-        {
-            return mid;
-        }
-
-        if (arr[mid].id < target) 
-        {
-            return binarySearchRec(arr, mid + 1, right, target);
-        }
-        
-        else 
-        {
-            return binarySearchRec(arr, left, mid - 1, target);
-        }
-    }
-
-    return -1;
 }
 
 static carList addCarRec(carList l, char * plate,carList * dir)
