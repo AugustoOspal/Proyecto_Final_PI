@@ -320,6 +320,8 @@ void addTicket(infractionSystemADT system, char * date, char * plate, char * age
         checkMemory(system->tickets);
     }
 
+    size_t idx = system->qtyTickets;
+
     system->tickets[idx].plate = copyString(plate);
     system->tickets[idx].date = copyString(date);
     system->tickets[idx].agency = copyString(agency);
@@ -328,8 +330,8 @@ void addTicket(infractionSystemADT system, char * date, char * plate, char * age
     system->tickets[idx].index = idx;
     system->qtyTickets++;
 
-    addAgency(system,date,plate,agency,fine,id,system->qtyTickets - 1);
-    addInfraction(system,date,plate,agency,fine,id);
+    addAgency(system, date, plate, agency, fine,id, idx);
+    addInfraction(system, date, plate,agency ,fine, id);
 }
 
 static void space(size_t * aux, size_t qty,size_t idx)
