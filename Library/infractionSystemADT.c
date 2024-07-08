@@ -375,7 +375,7 @@ static agencyList addAgencyRec( agencyList l,char * agency, size_t idx ,size_t i
         aux->qtyTickets++;
 
 
-        aux->countInf=malloc(system->qtyInfractionsqtyInfractions * sizeof(infractionCounter));
+        aux->countInf=malloc(system->qtyInfractions * sizeof(infractionCounter));
         initializeInfractions(system,l->countInf,id);
         aux->countInf[infIdx].counter++;
         
