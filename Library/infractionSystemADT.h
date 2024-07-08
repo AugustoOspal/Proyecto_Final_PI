@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FIELDS 2
 #define BUFFER_SIZE 255
 #define DELIMITER ";\n\r"
 
@@ -41,8 +40,8 @@ void freeInfractionSystem(infractionSystemADT system);
 
 void addTicket(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id);
 
-void addAgency(infractionSystemADT city, char * date, char * plate, char * agency, int fine, size_t id,size_t idx);
+void addAgency(infractionSystemADT system, char * agency, size_t idx);
 
-void addInfraction(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id);
+void addInfraction(infractionSystemADT system, char * plate, size_t id);
 
 #endif //PROYECTO_FINAL_PI_TICKETSADT_H

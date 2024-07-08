@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Library/helpers.h"
-#include "infractionSystemADT.h"
+#include "Library/infractionSystemADT.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
 #if defined(NYC)
     ticketMap mapTicket = {0, 1, 4, 3, 2};
-    infractionsMap mapInfraction = {0, 1};
+    infractionMap mapInfraction = {0, 1};
 #elif defined(CHI)
     ticketMap mapTicket = {1, 0, 2, 4, 3};
     infractionsMap mapInfraction = {0, 1};
@@ -21,8 +21,7 @@ int main(int argc, char *argv[])
     FILE *tickets = fopen(argv[1], "r");
     FILE *infractions = fopen(argv[2], "r");
 
-    infractionSystemADT city = makeNewInfractionSystem(void);
+    infractionSystemADT city = makeNewInfractionSystem();
     loadInfractions(city, infractions, mapInfraction);
     loadTickets(city, tickets, mapTicket);
-
 }

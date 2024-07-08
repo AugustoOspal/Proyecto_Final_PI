@@ -8,7 +8,6 @@
 
 #define BUFFER 300
 #define DELIM ";"
-#define FIELDS 5
 #define NUMBER_INPUT_FILES 2
 
 // Error codes

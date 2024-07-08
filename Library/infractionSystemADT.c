@@ -1,7 +1,6 @@
 #include "infractionSystemADT.h"
 #include <stdlib.h>
 #include <string.h>
-#include <string.h>
 
 #define BLOCK_TICKETS 1000
 #define BLOCK_IDX 50
@@ -285,35 +284,103 @@ void freeInfractionSystem(infractionSystemADT system)
     free(system);
 }
 
-
-int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
+static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
 {
-    if (!system)
+    for (size_t i = 0; i < system->qtyInfractions; i++)
     {
-        puts(ERROR_INVALID_SYSTEM_M);
-        exit(ERROR_INVALID_SYSTEM);
+        countInf[i].id = system->infractions[i].id;
+        countInf[i].counter = 0;
+        countInf[i].name = system->infractions[i].name;
+    }
+}
+
+static size_t binarySearchRec(infraction arr[], size_t dim, size_t target)
+{
+    // If it's not in the vector
+    if (dim == 0)
+    {
+        puts(ERROR_INFRACTION_NOT_FOUND_M);
+        exit(ERROR_INFRACTION_NOT_FOUND);
     }
 
-    size_t qtyTokens, counter = 0;
-    char buffer[BUFFER_SIZE], **tokens;
-
-    // Skips the first line
-    fgets(buffer, BUFFER_SIZE, ticketsFile);
-    while (fgets(buffer, BUFFER_SIZE, ticketsFile))
+    size_t mid = dim / 2;
+    if (target > arr[mid].id)
     {
-        tokens = sectionString(buffer, DELIMITER, &qtyTokens);
-        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
-        counter++;
-        if (qtyTokens != map)
+        return binarySearchRec(arr + mid + 1, dim - mid - 1, target);
+    }
+
+    if (target < arr[mid].id)
+    {
+        return binarySearchRec(arr, mid, target);
+    }
+
+    return mid;
+}
+
+static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t infIdx, infractionSystemADT system)
+{
+    int cmp;
+    size_t id = system->tickets[idx].infractionID;
+
+    if (l == NULL || (cmp = strcmp(l->name,agency)) < 0)
+    {
+        // Create new node
+        agencyList newAgency = malloc(sizeof(struct agency));
+        newAgency->name = copyString(agency);
+        newAgency->tickets = malloc(BLOCK_TICKETS * sizeof(size_t));
+        newAgency->tickets[0] = idx;
+        newAgency->qtyTickets++;
+        newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
+
+        initializeInfractions(system, newAgency->countInf, id);
+
+        newAgency->countInf[infIdx].counter++;
+        newAgency->max->counter = 0;
+        newAgency->max->id = 0;
+        newAgency->max->name = NULL;
+
+        newAgency->next = l;
+        system->qtyAgencies++;
+        return newAgency;
+    }
+
+    if (cmp == 0)
+    {
+        if (l->qtyTickets % BLOCK_TICKETS == 0)
         {
-            puts(ERROR_INVALID_NUMBER_FIELDS_M);
-            exit(ERROR_INVALID_NUMBER_FIELDS);
+            l->tickets = realloc(l->tickets, BLOCK_TICKETS * sizeof(size_t));
+            checkMemory(l->tickets);
         }
 
-        // Todo: aca no se tendria que hacer un realloc de tickets con qtyTickets?
+        l->tickets[l->qtyTickets] = idx;
+        l->qtyTickets++;
+        l->countInf[infIdx].counter++;
 
-        free(tokens);
+        if (l->countInf[infIdx].counter > l->max->counter)
+        {
+            l->max = &(l->countInf[infIdx]);
+        }
+
+        else if(l->countInf[infIdx].counter == l->max->counter && strcmp(l->countInf[infIdx].name,l->max->name) > 0)
+        {
+            l->max = &(l->countInf[infIdx]);
+        }
+
+        return l;
     }
+
+    l->next = addAgencyRec(l->next, agency, idx, infIdx, system);
+    return l;
+}
+
+void addAgency(infractionSystemADT system, char * agency, size_t idx)
+{
+    size_t infIdx, id;
+
+    id = system->tickets[idx].infractionID;
+    infIdx = binarySearchRec(system->infractions, system->qtyInfractions, id);
+
+    system->agencyList = addAgencyRec(system->agencyList, agency, idx, infIdx, system);
 }
 
 static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
@@ -387,156 +454,38 @@ void addTicket(infractionSystemADT system, char * date, char * plate, char * age
     system->tickets[idx].index = idx;
     system->qtyTickets++;
 
-    addAgency(system, agency, id, idx);
-    addInfraction(system, date, plate,agency ,fine, id);
+    addAgency(system, agency, idx);
+    addInfraction(system, plate, id);
 }
 
-static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
+int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 {
-    for (size_t i = 0; i < system->qtyInfractions; i++)
+    if (!system)
     {
-        countInf[i].id = system->infractions[i].id;
-        countInf[i].counter = 0;
-        countInf[i].name = system->infractions[i].name;
-    }
-}
-
-static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t id,infractionSystemADT system, int infIdx, char * flag)
-{
-    int cmp;
-    size_t id = system->tickets[idx].infractionID;
-
-    if (l == NULL || (cmp = strcmp(l->name,agency)) < 0)
-    {
-        // Create new node
-        agencyList newAgency = malloc(sizeof(struct agency));
-        newAgency->name = copyString(agency);
-        newAgency->tickets = malloc(BLOCK_TICKETS * sizeof(size_t));
-        newAgency->tickets[0] = idx;
-        newAgency->qtyTickets++;
-        newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
-
-        initializeInfractions(system,l->countInf,id);
-
-        newAgency->countInf[infIdx].counter++;
-        newAgency->max.counter = 0;
-        newAgency->max.id = 0;
-        newAgency->max.name = NULL;
-
-        newAgency->next=l;
-        system->qtyAgencies++;
-        return newAgency;
+        puts(ERROR_INVALID_SYSTEM_M);
+        exit(ERROR_INVALID_SYSTEM);
     }
 
-    if (cmp == 0)
+    size_t qtyTokens, counter = 0;
+    char buffer[BUFFER_SIZE], **tokens;
+
+    // Skips the first line
+    fgets(buffer, BUFFER_SIZE, ticketsFile);
+    while (fgets(buffer, BUFFER_SIZE, ticketsFile))
     {
-        if (l->qtyTickets % BLOCK_TICKETS == 0)
+        tokens = sectionString(buffer, DELIMITER, &qtyTokens);
+        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
+        counter++;
+        if (qtyTokens != map.fields)
         {
-            l->tickets = realloc(l->tickets, BLOCK_TICKETS * sizeof(size_t));
-            checkMemory(l->tickets);
+            puts(ERROR_INVALID_NUMBER_FIELDS_M);
+            exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
-        l->tickets[l->qtyTickets] = idx;
-        l->qtyTickets++;
-        l->countInf[infIdx].counter++;
+        // Todo: aca no se tendria que hacer un realloc de tickets con qtyTickets?
 
-        if (l->countInf[infIdx].counter > l->max.counter)
-        {
-            l->max = l->countInf[infIdx];
-        }
-
-        else if(l->countInf[infIdx].counter == l->max.counter && strcmp(l->countInf[infIdx].name,l->max.name) > 0)
-        {
-            l->max = l->countInf[infIdx];
-        }
-
-        return l;
+        free(tokens);
     }
 
-    l->next = addAgencyRec(l->next, agency, idx, system);
-    return l;
-
-}
-
-static size_t binarySearchRec(infraction arr[], size_t dim, size_t target)
-{
-    // If it's not in the vector
-    if (dim == 0)
-    {
-        puts(ERROR_INFRACTION_NOT_FOUND_M);
-        exit(ERROR_INFRACTION_NOT_FOUND);
-    }
-
-    size_t mid = dim / 2;
-    if (target > arr[mid].id)
-    {
-        return binarySearchRec(arr + mid + 1, dim - mid - 1, target);
-    }
-
-    if (target < arr[mid].id)
-    {
-        return binarySearchRec(arr, mid, target);
-    }
-
-    return mid;
-}
-
-void addAgency(infractionSystemADT system, char * agency, size_t idx)
-{
-    size_t infIdx, id;
-
-    id = system->tickets[idx].infractionID;
-    infIdx = binarySearchRec(system->infractions, system->qtyInfractions, id);
-
-    system->agencyList = addAgencyRec(system->agencyList, agency, idx, system);
-}
-
-static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
-{
-    int cmp;
-
-    if (l == NULL ||(cmp = strcmp(l->plate, plate)) < 0)
-    {
-        carList aux = malloc(sizeof(struct car));
-        aux->plate = copyString(plate);
-        aux->counter++;
-        aux->next = l;
-        *dir = aux;
-        return aux;
-    }
-    
-    if (cmp == 0)
-    {
-        l->counter++;
-        *dir = l;
-        return l;
-    }
-
-    l->next = addCarRec(l->next, plate, dir);
-    return l;
-}
-
-void addInfraction(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
-{
-    carList dir;
-    int idx = binarySearchRec(system->infractions,0,system->qtyInfractions,id);
-    
-    if (idx == -1)
-    {
-        puts(ERROR_INFRACTION_NOT_FOUND_M);
-        exit(ERROR_INFRACTION_NOT_FOUND);
-    }
-    
-    system->infractions[idx].qty++;
-    system->infractions[idx].carList = addCarRec(system->infractions[idx].carList, plate, &dir);
-
-    if (system->infractions[idx].biggest == NULL || dir->counter > system->infractions[idx].biggest->counter)
-    {
-        system->infractions[idx].biggest=dir;
-    }
-    
-    else if (dir->counter == system->infractions[idx].biggest->counter && strcmp(dir->plate,system->infractions[idx].biggest->plate) < 0)
-    {
-            system->infractions[idx].biggest=dir;
-    }
+    return counter;
 }
