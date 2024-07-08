@@ -9,7 +9,6 @@
 typedef struct car
 {
     char *plate;
-    char *date;
     size_t counter;
     struct car *next;
 }car;
@@ -201,4 +200,11 @@ void addInfraction(infractionSystemADT city, char * date, char * plate, char * a
             city->infractions[idx].biggest=dir;
     }
 
+}
+
+char** totalTicketsPerInfraction(infractionSystemADT city){
+    char * rta[city->qtyInfractions];
+    for ( int i=0 ,t=city->qtyInfractions; t != 0 ; t--, i++ ){
+
+    }
 }
