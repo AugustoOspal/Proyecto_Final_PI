@@ -58,6 +58,7 @@ class agency
     size_t qtyTickets
     size_t tickets[qtyTickets]
     size_t counterPerInfraction[qtyInfractions]
+    infractionCounter *max
     agancy *next
 }
 

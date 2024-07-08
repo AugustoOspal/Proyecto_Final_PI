@@ -334,23 +334,8 @@ void addTicket(infractionSystemADT system, char * date, char * plate, char * age
     system->tickets[idx].index = idx;
     system->qtyTickets++;
 
-    addAgency(system, date, plate, agency, fine,id, idx);
+    addAgency(system, agency, id, idx);
     addInfraction(system, date, plate,agency ,fine, id);
-}
-
-static void space(size_t * aux, size_t qty,size_t idx)
-{
-    if (idx >= qty)
-    {
-        aux = realloc(aux,idx*sizeof(size_t));
-        checkMemory(aux);
-    }
-
-    else if (BLOCK_TICKETS % qty == 0)
-    {
-        aux = realloc(aux, BLOCK_IDX * sizeof(size_t));
-        checkMemory(aux);
-    }
 }
 
 static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
@@ -358,47 +343,64 @@ static void initializeInfractions(infractionSystemADT system, infractionCounter 
     for (size_t i = 0; i < system->qtyInfractions; i++)
     {
         countInf[i].id = system->infractions[i].id;
-        countInf[i].counter = countInf[i].id == lastIdx;
+        countInf[i].counter = 0;
         countInf[i].name = system->infractions[i].name;
     }
 }
 
 static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t id,infractionSystemADT system, int infIdx, char * flag)
 {
-    int compear;
-    if (l == NULL || (compear = strcmp(l->name,agency)) > 0)
+    int cmp;
+    size_t id = system->tickets[idx].infractionID;
+
+    if (l == NULL || (cmp = strcmp(l->name,agency)) < 0)
     {
         // Create new node
-        agencyList aux = malloc(sizeof(struct agency));
-        aux->name= copyString(agency);
-        
-        // Gerenate space for tickets
-        space(aux->tickets,aux->qtyTickets,idx);
+        agencyList newAgency = malloc(sizeof(struct agency));
+        newAgency->name = copyString(agency);
+        newAgency->tickets = malloc(BLOCK_TICKETS * sizeof(size_t));
+        newAgency->tickets[0] = idx;
+        newAgency->qtyTickets++;
+        newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
 
-        aux->tickets[aux->qtyTickets]=idx;
-        aux->qtyTickets++;
-
-
-        aux->countInf=malloc(system->qtyInfractions * sizeof(infractionCounter));
         initializeInfractions(system,l->countInf,id);
-        aux->countInf[infIdx].counter++;
-        
-        aux->next=l;
-        *flag=1;
-        return aux;
+
+        newAgency->countInf[infIdx].counter++;
+        newAgency->max.counter = 0;
+        newAgency->max.id = 0;
+        newAgency->max.name = NULL;
+
+        newAgency->next=l;
+        system->qtyAgencies++;
+        return newAgency;
     }
 
-    if (compear == 0)
+    if (cmp == 0)
     {
-        space(l->tickets,l->qtyTickets,idx);
-        l->tickets[l->qtyTickets]=idx;
+        if (l->qtyTickets % BLOCK_TICKETS == 0)
+        {
+            l->tickets = realloc(l->tickets, BLOCK_TICKETS * sizeof(size_t));
+            checkMemory(l->tickets);
+        }
+
+        l->tickets[l->qtyTickets] = idx;
         l->qtyTickets++;
         l->countInf[infIdx].counter++;
+
+        if (l->countInf[infIdx].counter > l->max.counter)
+        {
+            l->max = l->countInf[infIdx];
+        }
+
+        else if(l->countInf[infIdx].counter == l->max.counter && strcmp(l->countInf[infIdx].name,l->max.name) > 0)
+        {
+            l->max = l->countInf[infIdx];
+        }
 
         return l;
     }
 
-    l->next=addAgencyRec(l->next,agency,idx,id,system,flag);
+    l->next = addAgencyRec(l->next, agency, idx, system);
     return l;
 
 }
@@ -426,32 +428,21 @@ static size_t binarySearchRec(infraction arr[], size_t dim, size_t target)
     return mid;
 }
 
-void addAgency(infractionSystemADT system, char * date, char * plate, char * agency, int fine, size_t id,size_t idx) {
-    char flag = 0;
+void addAgency(infractionSystemADT system, char * agency, size_t idx)
+{
+    size_t infIdx, id;
 
-    int infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions, id);
-    system->agencyList = addAgencyRec(system->agencyList, agency, system->tickets[system->qtyTickets - 1].index, system->tickets[system->qtyTickets - 1].infractionID, system, infIdx, &flag);
-    system->qtyAgencies += flag;
+    id = system->tickets[idx].infractionID;
+    infIdx = binarySearchRec(system->infractions, system->qtyInfractions, id);
 
-    if (!system->agencyList->max || system->agencyList->countInf[infIdx].counter > system->agencyList->max->counter)
-    {
-        system->agencyList->max->counter = system->agencyList->countInf[infIdx].counter;
-        system->agencyList->max->id = system->agencyList->countInf[infIdx].id;
-        system->agencyList->max->name = (system->infractions[infIdx].name);
-    }
-    
-    else if(system->agencyList->countInf[infIdx].counter == system->agencyList->max->counter && strcmp(system->agencyList->countInf[infIdx].name,system->agencyList->max->name) > 0)
-    {
-        system->agencyList->max->counter = system->agencyList->countInf[infIdx].counter;
-        system->agencyList->max->id = system->agencyList->countInf[infIdx].id;
-        system->agencyList->max->name = system->infractions[infIdx].name;
-    }
+    system->agencyList = addAgencyRec(system->agencyList, agency, idx, system);
 }
 
-static carList addCarRec(carList l, char * plate,carList * dir)
+static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
 {
-    int compear;
-    if (l == NULL ||(compear = strcmp(l->plate, plate)) > 0)
+    int cmp;
+
+    if (l == NULL ||(cmp = strcmp(l->plate, plate)) < 0)
     {
         carList aux = malloc(sizeof(struct car));
         aux->plate = copyString(plate);
@@ -461,11 +452,13 @@ static carList addCarRec(carList l, char * plate,carList * dir)
         return aux;
     }
     
-    if (compear == 0){
+    if (cmp == 0)
+    {
         l->counter++;
         *dir = l;
         return l;
     }
+
     l->next = addCarRec(l->next, plate, dir);
     return l;
 }
@@ -482,9 +475,9 @@ void addInfraction(infractionSystemADT system, char * date, char * plate, char *
     }
     
     system->infractions[idx].qty++;
-    system->infractions[idx].carList= addCarRec(system->infractions[idx].carList,plate,&dir);
+    system->infractions[idx].carList = addCarRec(system->infractions[idx].carList, plate, &dir);
 
-    if (system->infractions[idx].biggest == NULL || dir->counter > system->infractions[idx].biggest->counter )
+    if (system->infractions[idx].biggest == NULL || dir->counter > system->infractions[idx].biggest->counter)
     {
         system->infractions[idx].biggest=dir;
     }
