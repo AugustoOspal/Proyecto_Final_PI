@@ -37,11 +37,4 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
 
 void freeInfractionSystem(infractionSystemADT system);
 
-
-void addTicket(infractionSystemADT city, char * date, char * plate, char * agency, size_t fine, size_t id);
-
-void addAgency(infractionSystemADT system, char * agency, size_t idx);
-
-void addInfraction(infractionSystemADT system, char * plate, size_t id);
-
 #endif //PROYECTO_FINAL_PI_TICKETSADT_H
