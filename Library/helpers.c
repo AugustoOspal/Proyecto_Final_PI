@@ -89,7 +89,7 @@ void loadQuery1(infractionSystemADT system)
 
     while (hasNextInfraction(system))
     {
-        size_t qty = getQtyTickets(system);
+        size_t qty = getInfractionQty(system);
 
         char *qtyS = size_tToString(qty);
         char *name = getInfractionName(system);

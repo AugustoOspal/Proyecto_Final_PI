@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define BLOCK_IDX 255
-#define HASHSIZE 20
+#define HASHSIZE 1000
 #define HASHAUX 31
 
 

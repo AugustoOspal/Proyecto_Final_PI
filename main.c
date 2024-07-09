@@ -4,10 +4,6 @@
 
 int main(int argc, char *argv[])
 {
-    // BORRAR DESPUES!!!!!!!!
-    argv[1] = "../DataSets/ticketsNYC.csv";
-    argv[2] = "../DataSets/infractionsNYC.csv";
-
     validateCommandLine(argc);
     validateFiles(argc, argv);
 
@@ -42,5 +38,5 @@ int main(int argc, char *argv[])
 
     fclose(tickets);
     fclose(infractions);
-    puts("OK!");
+    puts("Finish!");
 }
