@@ -101,23 +101,12 @@ static void checkMemory(void *pointer)
     }
 }
 
-static char * copyString(char *string)
+static char * copyString(const char *string)
 {
     char *newString = NULL;
-    size_t dim = 0, counter;
-    for (counter = 0; string[counter]; counter++)
-    {
-        if (counter % BLOCK_IDX == 0)
-        {
-            dim += BLOCK_IDX;
-            newString = realloc(newString, (dim + 1) * sizeof(char));
-            checkMemory(newString);
-        }
-
-        newString[counter] = string[counter];
-    }
-    newString[counter] = 0;
-    newString = realloc(newString, (counter + 1) * sizeof(char));
+    size_t len = strlen(string);
+    newString = malloc(len + 1);
+    memcpy(newString, string, len + 1);
     checkMemory(newString);
     return newString;
 }
