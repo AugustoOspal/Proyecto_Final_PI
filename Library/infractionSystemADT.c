@@ -3,8 +3,8 @@
 #include <string.h>
 
 #define BLOCK_IDX 255
-#define INITIALS 10000
-#define HASHSIZE 10000
+#define INITIALS 5000
+#define HASHSIZE 5000
 
 
 // ERROR CODES
@@ -19,7 +19,6 @@
 #define ERROR_INVALID_SYSTEM_M "Invalid system"
 #define ERROR_INFRACTION_NOT_FOUND_M "Infraction not found"
 #define ERROR_INVALID_NUMBER_FIELDS_M "Invalid number of fields"
-
 
 typedef struct car
 {
@@ -106,8 +105,8 @@ static char * copyString(const char *string)
     char *newString = NULL;
     size_t len = strlen(string);
     newString = malloc(len + 1);
-    memcpy(newString, string, len + 1);
     checkMemory(newString);
+    memcpy(newString, string, len + 1);
     return newString;
 }
 
@@ -163,6 +162,7 @@ static char ** sectionString(char *string, char *delimiters, size_t *dimVec)
 
     *dimVec = counter;
     tokens = realloc(tokens, counter * sizeof(char *));
+    checkMemory(tokens);
     return tokens;
 }
 
@@ -225,6 +225,7 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
 
 static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
 {
+    checkMemory(countInf);
     for (size_t i = 0; i < system->qtyInfractions; i++)
     {
         countInf[i].id = system->infractions[i].id;
@@ -423,8 +424,6 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 
         if (qtyTokens != map.fields)
         {
-            // todo: borrar esto que era de test
-            printf("Error in line %lu, patente: %s\n", system->qtyTickets, tokens[map.plate]);
             puts(ERROR_INVALID_NUMBER_FIELDS_M);
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
