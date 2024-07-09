@@ -5,8 +5,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
-#define BUFFER_SIZE 255
+#define BUFFER_SIZE 500
 #define DELIMITER ";\n\r"
 
 typedef struct ticketMap
@@ -32,9 +33,15 @@ typedef struct infractionsCDT * infractionsADT;
 
 infractionSystemADT makeNewInfractionSystem(void);
 
-int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map);
+/*
+ * Returns the quantity of tickets loaded
+ */
+size_t loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map);
 
-int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map);
+/*
+ * Returns the qty of infractions loaded
+ */
+size_t loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map);
 
 /*
  * Sorts the infractions in the system by the quantity of tickets

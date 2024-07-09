@@ -1,1 +1,0 @@
-/usr/bin/cc -Wall -pedantic -std=c99 -lm -g -fsanitize=address -g CMakeFiles/NYC.dir/main.c.o CMakeFiles/NYC.dir/Library/helpers.c.o -o NYC 

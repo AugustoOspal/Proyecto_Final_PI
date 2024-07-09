@@ -58,9 +58,9 @@ typedef struct agency * agencyList;
 
 typedef struct infractionSystemCDT
 {
-    infraction * infractions;
-    agency * agencyList;
-    agency * currentAgency;
+    infraction *infractions;
+    agency *agencyList;
+    agency *currentAgency;
     size_t idxCurrentInfraction;
     size_t qtyInfractions;
     size_t qtyTickets;
@@ -70,17 +70,9 @@ typedef struct infractionSystemCDT
 typedef struct infractionNode
 {
     size_t id;
-    size_t qty;
     char *name;
     struct infractionNode *tail;
 }infractionNode;
-
-typedef struct infractionsCDT
-{
-    infractionNode *infractionList;
-    infractionNode *current;
-    size_t qtyInfractions;
-}infractionsCDT;
 
 typedef struct infractionNode *infractionList;
 
@@ -99,29 +91,28 @@ static size_t hash(char *s)
 
 static void checkMemory(void *pointer)
 {
-    if (!pointer)
+    if (!pointer || errno == ENOMEM)
     {
         puts(ERROR_ALLOCATING_MEMORY_M);
         exit(ERROR_ALLOCATING_MEMORY);
     }
 }
 
-static char * copyString(const char *string)
+static char * copyString(const char * s)
 {
-    char *newString = NULL;
-    size_t len = strlen(string);
-    newString = malloc(len + 1);
-    checkMemory(newString);
-    memcpy(newString, string, len + 1);
-    return newString;
+    errno = 0;
+    char * aux = malloc(strlen(s)+1);
+    checkMemory(aux);
+    return strcpy(aux, s);
 }
 
 // Use binary search to find the position of the infraction
-static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
+static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target, char *flag)
 {
     // Target not found
     if (high < low)
     {
+        *flag = 0;
         return (size_t) - 1;
     }
 
@@ -136,20 +127,20 @@ static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t 
         // Search in the left half
     else if (target < arr[mid].id)
     {
-        return binarySearchRec(arr, low, mid - 1, target);
+        return binarySearchRec(arr, low, mid - 1, target, flag);
     }
 
         // Search in the right half
     else
     {
-        return binarySearchRec(arr, mid + 1, high, target);
+        return binarySearchRec(arr, mid + 1, high, target, flag);
     }
 }
 
 static char ** sectionString(char *string, char *delimiters, size_t *dimVec)
 {
+    errno = 0;
     size_t counter = 0, dim = 0;
-
     char *token, **tokens = NULL;
 
     token = strtok(string, delimiters);
@@ -205,6 +196,7 @@ static void freeAgencyList(agencyList list)
 
 static infractionList loadInfraction(infractionList infractionL, size_t id, char *name)
 {
+    errno = 0;
     if (!infractionL || id < infractionL->id)
     {
         //Make new node and initialize it
@@ -213,7 +205,6 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
 
         newNode->id = id;
         newNode->name = copyString(name);
-        newNode->qty = 0;
         newNode->tail = infractionL;
         return newNode;
     }
@@ -230,26 +221,32 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
 
 static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
 {
-    checkMemory(countInf);
-    for (size_t i = 0; i < system->qtyInfractions; i++)
+    if (system && countInf)
     {
-        countInf[i].id = system->infractions[i].id;
-        countInf[i].counter = 0;
-        countInf[i].name = system->infractions[i].name;
+        for (size_t i = 0; i < system->qtyInfractions; i++)
+        {
+            countInf[i].id = system->infractions[i].id;
+            countInf[i].counter = 0;
+            countInf[i].name = system->infractions[i].name;
+        }
     }
 }
 
 static agencyList addAgencyRec(agencyList l, char * agency, size_t id, size_t infIdx, infractionSystemADT system)
 {
     int cmp;
+    errno = 0;
 
     if (l == NULL || (cmp = strcmp(l->name,agency)) > 0)
     {
         // Create new node
         agencyList newAgency = malloc(sizeof(struct agency));
+        checkMemory(newAgency);
+
         newAgency->name = copyString(agency);
         newAgency->qtyTickets = 1;
         newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
+        checkMemory(newAgency->countInf);
 
         initializeInfractions(system, newAgency->countInf, id);
 
@@ -278,15 +275,10 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t id, size_t in
     return l;
 }
 
-static void addAgency(infractionSystemADT system, char * agency, size_t id)
-{
-    size_t infIdx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
-    system->agencyList = addAgencyRec(system->agencyList, agency, id, infIdx, system);
-}
-
 static carList addCarList(carList list, char *plate, infractionSystemADT system, size_t idx)
 {
-    int cmp;
+    errno = 0;
+    signed int cmp;
     carList prev, current = list;
 
     // Search for the plate
@@ -318,7 +310,7 @@ static carList addCarList(carList list, char *plate, infractionSystemADT system,
     if (current == list)
     {
         list = newCar;
-        newCar->next = NULL;
+
         if (!system->infractions[idx].biggest || (system->infractions[idx].biggest->counter == 0 || (system->infractions[idx].biggest->counter == 1 && strcmp(newCar->plate, system->infractions[idx].biggest->plate) < 0)))
         {
             system->infractions[idx].biggest = newCar;
@@ -333,42 +325,58 @@ static carList addCarList(carList list, char *plate, infractionSystemADT system,
     return list;
 }
 
-static void addInfraction(infractionSystemADT system, char * plate, size_t id)
+static int addInfraction(infractionSystemADT system, char * plate, size_t id, size_t idx)
 {
-    int idx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
-
     size_t hashValue = hash(plate);
 
     system->infractions[idx].qty++;
     system->infractions[idx].vec[hashValue] = addCarList(system->infractions[idx].vec[hashValue], plate, system, idx);
+    return 1;
 }
 
-static void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
+/*
+ * Returns 1 if added, 0 otherwise
+ */
+static int addTicket(infractionSystemADT system, char * plate, char * agency, size_t id)
 {
-    system->qtyTickets++;
+    char flag = 1;
+    size_t idx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id, &flag);
 
-    addAgency(system, agency, id);
-    addInfraction(system, plate, id);
+    if (!flag)
+    {
+        return 0;
+    }
+
+    system->agencyList = addAgencyRec(system->agencyList, agency, id, idx, system);
+    addInfraction(system, plate, id, idx);
+
+    return 1;
 }
 /* end of auxiliary functions */
 
 infractionSystemADT makeNewInfractionSystem(void)
 {
+    errno = 0;
     infractionSystemADT newSystem = calloc(1, sizeof(infractionSystemCDT));
+    checkMemory(newSystem);
     return newSystem;
 }
 
 // The file must be open in read
 // IMPORTANT: this function must be called before loadTickets
-int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map)
+size_t loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map)
 {
+    errno = 0;
+
     if (!system)
     {
         puts(ERROR_INVALID_SYSTEM_M);
         exit(ERROR_INVALID_SYSTEM);
     }
 
-    size_t qtyTokens, counter = 0;
+    size_t qtyTokens, counter = 0, id;
+
+    char *trash;
     char buffer[BUFFER_SIZE], **tokens;
 
     infractionList infractionsL = NULL;
@@ -378,10 +386,25 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
     while (fgets(buffer, BUFFER_SIZE, infractions))
     {
         tokens = sectionString(buffer, DELIMITER, &qtyTokens);
-        infractionsL = loadInfraction(infractionsL, atoi(tokens[map.id]), tokens[map.infractionName]);
+
+        if (qtyTokens != map.fields)
+        {
+            puts(ERROR_INVALID_NUMBER_FIELDS_M);
+            exit(ERROR_INVALID_NUMBER_FIELDS);
+        }
+
+        id = strtol(tokens[map.id], &trash, 10);
+
+        infractionsL = loadInfraction(infractionsL, id, tokens[map.infractionName]);
         counter++;
 
         free(tokens);
+    }
+
+    if (!infractionsL)
+    {
+        // Todo: aca da error porque el archivo no tenia infracciones
+        // solo el header
     }
 
     infraction *infractionVec = malloc(sizeof(infraction) * counter);
@@ -410,15 +433,19 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
     return counter;
 }
 
-int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
+size_t loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 {
+    errno = 0;
+
     if (!system)
     {
         puts(ERROR_INVALID_SYSTEM_M);
         exit(ERROR_INVALID_SYSTEM);
     }
 
-    size_t qtyTokens, counter = 0;
+    size_t qtyTokens, id;
+
+    char *trash;
     char buffer[BUFFER_SIZE], **tokens;
 
     // Skips the first line
@@ -433,13 +460,17 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
-        addTicket(system, tokens[map.date], tokens[map.plate], tokens[map.agency], atoi(tokens[map.fine]), atoi(tokens[map.infractionID]));
-        counter++;
+        id = strtol(tokens[map.infractionID], &trash, 10);
+
+        if (addTicket(system, tokens[map.plate], tokens[map.agency], id))
+        {
+            system->qtyTickets++;
+        }
 
         free(tokens);
     }
 
-    return counter;
+    return system->qtyTickets;
 }
 
 void freeInfractionSystem(infractionSystemADT system)
