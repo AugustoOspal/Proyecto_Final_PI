@@ -461,6 +461,29 @@ void freeInfractionSystem(infractionSystemADT system)
     free(system);
 }
 
+int compareInfractions(const void *a, const void *b)
+{
+    infraction *inf1 = (infraction *) a;
+    infraction *inf2 = (infraction *) b;
+
+    if (inf1->qty == inf2->qty)
+    {
+        return strcmp(inf1->name, inf2->name);
+    }
+
+    return (int)inf2->qty - (int)inf1->qty;
+}
+
+int sortInfractions(infractionSystemADT system)
+{
+    if (!system || !system->infractions)
+    {
+        return 0;
+    }
+
+    qsort(system->infractions, system->qtyInfractions, sizeof(infraction), compareInfractions);
+    return 1;
+}
 
 size_t getQtyTickets(infractionSystemADT system)
 {
@@ -474,9 +497,15 @@ size_t getQtyInfractions(infractionSystemADT system)
 
 
 
-void infractionToBegining(infractionSystemADT system)
+int infractionToBegining(infractionSystemADT system)
 {
-    system->idxCurrentInfraction = 0;
+    if (system && system->infractions)
+    {
+        system->idxCurrentInfraction = 0;
+        return 1;
+    }
+
+    return 0;
 }
 
 int hasNextInfraction(infractionSystemADT system)
@@ -484,9 +513,20 @@ int hasNextInfraction(infractionSystemADT system)
     return system->idxCurrentInfraction < system->qtyInfractions;
 }
 
-void setNextInfraction(infractionSystemADT system)
+int setNextInfraction(infractionSystemADT system)
 {
-    system->idxCurrentInfraction++;
+    if (system && system->infractions)
+    {
+        if (system->idxCurrentInfraction == system->qtyInfractions)
+        {
+            return 0;
+        }
+
+        system->idxCurrentInfraction++;
+        return 1;
+    }
+
+    return 0;
 }
 
 char * getInfractionName(infractionSystemADT system)
@@ -501,7 +541,12 @@ size_t getInfractionID(infractionSystemADT system)
 
 size_t getInfractionQty(infractionSystemADT system)
 {
-    return system->infractions[system->idxCurrentInfraction].qty;
+    if (system && system->infractions)
+    {
+        return system->infractions[system->idxCurrentInfraction].qty;
+    }
+
+    return 0;
 }
 
 char *getPlateWithTheMostInfractions(infractionSystemADT system, size_t *qty)
@@ -516,9 +561,15 @@ char *getPlateWithTheMostInfractions(infractionSystemADT system, size_t *qty)
     return NULL;
 }
 
-void agencyToBegining(infractionSystemADT system)
+int agencyToBegining(infractionSystemADT system)
 {
-    system->currentAgency = system->agencyList;
+    if (system && system->agencyList)
+    {
+        system->currentAgency = system->agencyList;
+        return 1;
+    }
+
+    return 0;
 }
 
 int hasNextAgency(infractionSystemADT system)

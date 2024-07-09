@@ -31,7 +31,8 @@ CMakeFiles/compileNYC.dir/Library/helpers.c.o: ../Library/helpers.c \
   /usr/include/stdlib.h \
   /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
   /usr/include/string.h \
-  ../main.h
+  ../main.h \
+  ../Library/infractionSystemADT.h
 
 CMakeFiles/compileNYC.dir/Library/infractionSystemADT.c.o: ../Library/infractionSystemADT.c \
   /usr/include/stdc-predef.h \
@@ -96,6 +97,7 @@ CMakeFiles/compileNYC.dir/main.c.o: ../main.c \
   /usr/include/string.h \
   ../Library/helpers.h \
   ../main.h \
+  ../Library/infractionSystemADT.h \
   ../Library/infractionSystemADT.h
 
 

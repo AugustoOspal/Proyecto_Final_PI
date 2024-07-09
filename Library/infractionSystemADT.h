@@ -36,17 +36,33 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map);
 
 int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap map);
 
+/*
+ * Sorts the infractions in the system by the quantity of tickets
+ * and if two tickets have the same quantity, it sorts them by the infraction name.
+ * If the system or infractions is empty, it returns 0
+ */
+int sortInfractions(infractionSystemADT system);
+
 int hasNextInfraction(infractionSystemADT system);
 
-void infractionToBegining(infractionSystemADT system);
+// If system or infraction is empty, it returns 0
+int infractionToBegining(infractionSystemADT system);
 
-void setNextInfraction(infractionSystemADT system);
+/*
+ * If it was already in the last one it doesn't do anything
+ * If the system or infractions is empty, it returns 0
+*/
+int setNextInfraction(infractionSystemADT system);
 
 // Returns a copy of the infraction name, so it must be freed after use
 char *getInfractionName(infractionSystemADT system);
 
 size_t getInfractionID(infractionSystemADT system);
 
+/*
+ * Returns the quantity of infractions for the current infraction
+ * If there are no infractions, it returns 0
+ */
 size_t getInfractionQty(infractionSystemADT system);
 
 /*
@@ -56,8 +72,8 @@ size_t getInfractionQty(infractionSystemADT system);
 */
 char *getPlateWithTheMostInfractions(infractionSystemADT system, size_t *qty);
 
-
-void agencyToBegining(infractionSystemADT system);
+// If there are no agencies, it returns 0 else 1
+int agencyToBegining(infractionSystemADT system);
 
 int hasNextAgency(infractionSystemADT system);
 
