@@ -30,16 +30,6 @@ class infractionsCHI
     description
 }
 
-class ticket
-{
-    char * plate
-    char * date
-    char * agency
-    size_t fine
-    size_t infractionID
-    size_t index
-}
-
 newYorkTicket -- infractionsNYC
 chicagoTicket -- infractionsCHI
 
@@ -56,7 +46,6 @@ class agency
     char * name
     'vector of positions for tickets in city
     size_t qtyTickets
-    size_t tickets[qtyTickets]
     size_t counterPerInfraction[qtyInfractions]
     infractionCounter *max
     agancy *next
@@ -67,6 +56,7 @@ class infraction
     size_t id
     size_t qty
     char * name
+    char vec[]
     car *carlist
     car *bigest
 }
@@ -74,7 +64,6 @@ class infraction
 class infractionSystem
 {
     infraction infractions[]
-    ticket tickets[]
     agency *agencyList
     size_t qtyInfractions
     size_t qtyTickets
@@ -82,7 +71,6 @@ class infractionSystem
 }
 
 infractionSystem -- agency
-infractionSystem -- ticket
 infractionSystem -- infraction
 infraction -- car
 

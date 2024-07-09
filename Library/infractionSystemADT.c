@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCK_TICKETS 50000
 #define BLOCK_IDX 255
-#define INITIALS 255
+#define INITIALS 10000
+#define HASHSIZE 10000
 
 
 // ERROR CODES
@@ -29,7 +29,6 @@ typedef struct car
 }car;
 
 typedef struct car * carList;
-
 
 typedef struct infraction
 {
@@ -81,6 +80,47 @@ typedef struct infractionNode
 typedef struct infractionNode *infractionList;
 
 /* Auxiliary Functions */
+
+static size_t hash(char *s)
+{
+    size_t hashval;
+    for (hashval = 0; *s != '\0'; s++)
+    {
+        hashval = *s + 31 * hashval;
+    }
+
+    return hashval % HASHSIZE;
+}
+
+static void checkMemory(void *pointer)
+{
+    if (!pointer)
+    {
+        puts(ERROR_ALLOCATING_MEMORY_M);
+        exit(ERROR_ALLOCATING_MEMORY);
+    }
+}
+
+static char * copyString(char *string)
+{
+    char *newString = NULL;
+    size_t dim = 0, counter;
+    for (counter = 0; string[counter]; counter++)
+    {
+        if (counter % BLOCK_IDX == 0)
+        {
+            dim += BLOCK_IDX;
+            newString = realloc(newString, (dim + 1) * sizeof(char));
+            checkMemory(newString);
+        }
+
+        newString[counter] = string[counter];
+    }
+    newString[counter] = 0;
+    newString = realloc(newString, (counter + 1) * sizeof(char));
+    checkMemory(newString);
+    return newString;
+}
 
 static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
 {
@@ -194,6 +234,54 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
     return infractionL;
 }
 
+static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
+{
+    for (size_t i = 0; i < system->qtyInfractions; i++)
+    {
+        countInf[i].id = system->infractions[i].id;
+        countInf[i].counter = 0;
+        countInf[i].name = system->infractions[i].name;
+    }
+}
+
+static agencyList addAgencyRec(agencyList l, char * agency, size_t id, size_t infIdx, infractionSystemADT system)
+{
+    int cmp;
+
+    if (l == NULL || (cmp = strcmp(l->name,agency)) > 0)
+    {
+        // Create new node
+        agencyList newAgency = malloc(sizeof(struct agency));
+        newAgency->name = copyString(agency);
+        newAgency->qtyTickets = 1;
+        newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
+
+        initializeInfractions(system, newAgency->countInf, id);
+
+        newAgency->countInf[infIdx].counter++;
+        newAgency->max = &(newAgency->countInf[infIdx]);
+
+        newAgency->next = l;
+        system->qtyAgencies++;
+        return newAgency;
+    }
+
+    if (cmp == 0)
+    {
+        l->qtyTickets++;
+        l->countInf[infIdx].counter++;
+
+        if (l->countInf[infIdx].counter > l->max->counter || (l->countInf[infIdx].counter == l->max->counter && strcmp(l->countInf[infIdx].name,l->max->name) > 0))
+        {
+            l->max = &(l->countInf[infIdx]);
+        }
+
+        return l;
+    }
+
+    l->next = addAgencyRec(l->next, agency, id, infIdx, system);
+    return l;
+}
 /* end of auxiliary functions */
 
 infractionSystemADT makeNewInfractionSystem(void)
@@ -237,7 +325,12 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
         infractionVec[i].id = infractionsL->id;
         infractionVec[i].name = infractionsL->name;
         infractionVec[i].qty = 0;
-        infractionVec[i].carList = NULL;
+
+        for (size_t j = 0; j < INITIALS; j++)
+        {
+            infractionVec[i].vec[j] = NULL;
+        }
+
         infractionVec[i].biggest = NULL;
         infractionsL = infractionsL->tail;
     }
@@ -254,92 +347,20 @@ void freeInfractionSystem(infractionSystemADT system)
     for (size_t i = 0; i < system->qtyInfractions; i++)
     {
         free(system->infractions[i].name);
-        freeCarList(system->infractions[i].carList);
+
+        for (size_t j = 0; j < INITIALS; j++)
+        {
+            freeCarList(system->infractions[i].vec[j]);
+        }
     }
     free(system->infractions);
 
     freeAgencyList(system->agencyList);
-    
+
     free(system);
 }
 
-static void initializeInfractions(infractionSystemADT system, infractionCounter * countInf, size_t lastIdx)
-{
-    for (size_t i = 0; i < system->qtyInfractions; i++)
-    {
-        countInf[i].id = system->infractions[i].id;
-        countInf[i].counter = 0;
-        countInf[i].name = system->infractions[i].name;
-    }
-}
 
-static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
-{
-    // Target not found
-    if (high < low)
-    {
-        return (size_t)-1;
-    }
-
-    size_t mid = low + (high - low) / 2;
-
-    // Target found, return its position
-    if (target == arr[mid].id)
-    {
-        return mid;
-    }
-
-    // Search in the left half
-    else if (target < arr[mid].id)
-    {
-        return binarySearchRec(arr, low, mid - 1, target);
-    }
-
-    // Search in the right half
-    else
-    {
-        return binarySearchRec(arr, mid + 1, high, target);
-    }
-}
-
-static agencyList addAgencyRec(agencyList l, char * agency, size_t id, size_t infIdx, infractionSystemADT system)
-{
-    int cmp;
-
-    if (l == NULL || (cmp = strcmp(l->name,agency)) > 0)
-    {
-        // Create new node
-        agencyList newAgency = malloc(sizeof(struct agency));
-        newAgency->name = copyString(agency);
-        newAgency->qtyTickets = 1;
-        newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
-
-        initializeInfractions(system, newAgency->countInf, id);
-
-        newAgency->countInf[infIdx].counter++;
-        newAgency->max = &(newAgency->countInf[infIdx]);
-
-        newAgency->next = l;
-        system->qtyAgencies++;
-        return newAgency;
-    }
-
-    if (cmp == 0)
-    {
-        l->qtyTickets++;
-        l->countInf[infIdx].counter++;
-
-        if (l->countInf[infIdx].counter > l->max->counter || (l->countInf[infIdx].counter == l->max->counter && strcmp(l->countInf[infIdx].name,l->max->name) > 0))
-        {
-            l->max = &(l->countInf[infIdx]);
-        }
-
-        return l;
-    }
-
-    l->next = addAgencyRec(l->next, agency, id, infIdx, system);
-    return l;
-}
 
 void addAgency(infractionSystemADT system, char * agency, size_t id)
 {
@@ -507,11 +528,12 @@ static carList addCarList(carList list, char *plate, infractionSystemADT system,
 
 void addInfraction(infractionSystemADT system, char * plate, size_t id)
 {
-    // Todo: no entiendo porque con char no funciona
-    int p = plate[0];
     int idx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
+
+    size_t hashValue = hash(plate);
+
     system->infractions[idx].qty++;
-    system->infractions[idx].vec[p] = addCarList(system->infractions[idx].vec[p], plate, system, idx);
+    system->infractions[idx].vec[hashValue] = addCarList(system->infractions[idx].vec[hashValue], plate, system, idx);
 }
 
 void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
@@ -556,51 +578,3 @@ int loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
     return counter;
 }
 
-// Tester functions
-
-void printInfractions(infractionSystemADT system)
-{
-    for (size_t i = 0; i < system->qtyInfractions; i++)
-    {
-        printf("Infraction ID: %lu\n", system->infractions[i].id);
-        printf("Infraction Name: %s\n", system->infractions[i].name);
-        printf("Infraction Qty: %lu\n", system->infractions[i].qty);
-        printf("Infraction Biggest: %s\n", system->infractions[i].biggest->plate);
-        printf("Infraction Biggest Counter: %lu\n", system->infractions[i].biggest->counter);
-        puts("Car List:");
-        carList aux = system->infractions[i].carList;
-        while (aux)
-        {
-            printf("Plate: %s\n", aux->plate);
-            printf("Counter: %lu\n", aux->counter);
-            aux = aux->next;
-        }
-    }
-}
-
-void printAgencies(infractionSystemADT system)
-{
-    for (size_t i = 0; i < system->qtyAgencies; i++)
-    {
-        printf("Agency Name: %s\n", system->agencyList[i].name);
-        printf("Agency Qty Tickets: %lu\n", system->agencyList[i].qtyTickets);
-        printf("Agency Max Infraction: %s\n", system->agencyList[i].max->name);
-        printf("Agency Max Infraction Counter: %lu\n", system->agencyList[i].max->counter);
-        puts("Agency Tickets:");
-        puts("Agency Infractions:");
-        for (size_t j = 0; j < system->qtyInfractions; j++)
-        {
-            printf("Infraction ID: %lu\n", system->agencyList[i].countInf[j].id);
-            printf("Infraction Name: %s\n", system->agencyList[i].countInf[j].name);
-            printf("Infraction Counter: %lu\n", system->agencyList[i].countInf[j].counter);
-        }
-    }
-}
-
-void printInfractionSystem(infractionSystemADT system)
-{
-    printInfractions(system);
-    printAgencies(system);
-}
-
-// End of tester functions

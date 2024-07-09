@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     // BORRAR DESPUES!!!!!!!!
-    argv[1] = "../DataSets/ticketsNYC1000000.csv";
+    argv[1] = "../DataSets/ticketsNYC15000000.csv";
     argv[2] = "../DataSets/infractionsNYC.csv";
 
     validateCommandLine(argc);
@@ -29,7 +29,10 @@ int main(int argc, char *argv[])
     loadInfractions(city, infractions, mapInfraction);
     loadTickets(city, tickets, mapTicket);
 
+    freeInfractionSystem(city);
+
     fclose(tickets);
     fclose(infractions);
+    puts("OK!");
 }
 
