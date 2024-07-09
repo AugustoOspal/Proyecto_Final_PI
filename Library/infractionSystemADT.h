@@ -87,10 +87,11 @@ void setNextAgency(infractionSystemADT system);
 char *getAgencyName(infractionSystemADT system);
 
 /*
- * Returns the most popular infraction for the agency that is currently being processed
- * If there are no infractions, it returns NULL and sets the quantity to 0
+ * Returns the most popular infraction for the agency that is currently being processed.
+ * It returns a copy of the infraction name, so it must be freed after use.
+ * If there are no infractions, it returns NULL and sets the quantity to 0.
 */
-size_t getMostPopularInfractionForAgency(infractionSystemADT system, size_t *qty);
+char * getMostPopularInfractionForAgency(infractionSystemADT system, size_t *qty);
 
 size_t getQtyTickets(infractionSystemADT system);
 

@@ -3,8 +3,7 @@
 #include <string.h>
 
 #define BLOCK_IDX 255
-#define INITIALS 5000
-#define HASHSIZE 5000
+#define HASHSIZE 20
 #define HASHAUX 31
 
 
@@ -35,7 +34,7 @@ typedef struct infraction
     size_t id;
     size_t qty;
     char *name;
-    carList vec[INITIALS];
+    carList vec[HASHSIZE];
     car *biggest;
 }infraction;
 
@@ -395,7 +394,7 @@ int loadInfractions(infractionSystemADT system, FILE *infractions, infractionMap
         infractionVec[i].name = infractionsL->name;
         infractionVec[i].qty = 0;
 
-        for (size_t j = 0; j < INITIALS; j++)
+        for (size_t j = 0; j < HASHSIZE; j++)
         {
             infractionVec[i].vec[j] = NULL;
         }
@@ -449,7 +448,7 @@ void freeInfractionSystem(infractionSystemADT system)
     {
         free(system->infractions[i].name);
 
-        for (size_t j = 0; j < INITIALS; j++)
+        for (size_t j = 0; j < HASHSIZE; j++)
         {
             freeCarList(system->infractions[i].vec[j]);
         }
@@ -494,8 +493,6 @@ size_t getQtyInfractions(infractionSystemADT system)
 {
     return system->qtyInfractions;
 }
-
-
 
 int infractionToBegining(infractionSystemADT system)
 {
@@ -585,7 +582,7 @@ void setNextAgency(infractionSystemADT system)
     }
 }
 
-char *getAgencyName(infractionSystemADT system)
+char * getAgencyName(infractionSystemADT system)
 {
     if (system && system->currentAgency)
     {
@@ -595,14 +592,15 @@ char *getAgencyName(infractionSystemADT system)
     return NULL;
 }
 
-size_t getMostPopularInfractionForAgency(infractionSystemADT system, size_t *qty)
+char * getMostPopularInfractionForAgency(infractionSystemADT system, size_t *qty)
 {
     if (system && system->currentAgency)
     {
+        char *name = copyString(system->currentAgency->max->name);
         *qty = system->currentAgency->max->counter;
-        return system->currentAgency->max->id;
+        return name;
     }
 
     *qty = 0;
-    return 0;
+    return NULL;
 }

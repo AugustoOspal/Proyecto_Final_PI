@@ -33,7 +33,6 @@ class infractionsCHI
 newYorkTicket -- infractionsNYC
 chicagoTicket -- infractionsCHI
 
-' Ideas
 class car
 {
     char * plate
@@ -44,9 +43,8 @@ class car
 class agency
 {
     char * name
-    'vector of positions for tickets in city
     size_t qtyTickets
-    size_t counterPerInfraction[qtyInfractions]
+    infractionCounter counterPerInfraction[qtyInfractions]
     infractionCounter *max
     agancy *next
 }
