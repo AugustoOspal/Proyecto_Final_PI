@@ -4,6 +4,7 @@
 
 #define BLOCK_TICKETS 50000
 #define BLOCK_IDX 255
+#define INITIALS 255
 
 
 // ERROR CODES
@@ -18,6 +19,7 @@
 #define ERROR_INVALID_SYSTEM_M "Invalid system"
 #define ERROR_INFRACTION_NOT_FOUND_M "Infraction not found"
 #define ERROR_INVALID_NUMBER_FIELDS_M "Invalid number of fields"
+
 
 typedef struct car
 {
@@ -34,7 +36,7 @@ typedef struct infraction
     size_t id;
     size_t qty;
     char *name;
-    car *carList;
+    carList vec[INITIALS];
     car *biggest;
 }infraction;
 
@@ -60,7 +62,6 @@ typedef struct agency * agencyList;
 typedef struct infractionSystemCDT
 {
     infraction * infractions;
-    ticket * tickets;
     agency * agencyList;
     size_t qtyInfractions;
     size_t qtyTickets;
@@ -81,34 +82,33 @@ typedef struct infractionNode *infractionList;
 
 /* Auxiliary Functions */
 
-static void checkMemory(void *pointer)
+static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
 {
-    if (!pointer)
+    // Target not found
+    if (high < low)
     {
-        puts(ERROR_ALLOCATING_MEMORY_M);
-        exit(ERROR_ALLOCATING_MEMORY);
+        return (size_t)-1;
     }
-}
 
-static char * copyString(char *string)
-{
-    char *newString = NULL;
-    size_t dim = 0, counter;
-    for (counter = 0; string[counter]; counter++)
+    size_t mid = low + (high - low) / 2;
+
+    // Target found, return its position
+    if (target == arr[mid].id)
     {
-        if (counter % BLOCK_IDX == 0)
-        {
-            dim += BLOCK_IDX;
-            newString = realloc(newString, (dim + 1) * sizeof(char));
-            checkMemory(newString);
-        }
-
-        newString[counter] = string[counter];
+        return mid;
     }
-    newString[counter] = 0;
-    newString = realloc(newString, (counter + 1) * sizeof(char));
-    checkMemory(newString);
-    return newString;
+
+        // Search in the left half
+    else if (target < arr[mid].id)
+    {
+        return binarySearchRec(arr, low, mid - 1, target);
+    }
+
+        // Search in the right half
+    else
+    {
+        return binarySearchRec(arr, mid + 1, high, target);
+    }
 }
 
 static char ** sectionString(char *string, char *delimiters, size_t *dimVec)
@@ -302,7 +302,7 @@ static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t 
     }
 }
 
-static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t infIdx, infractionSystemADT system)
+static agencyList addAgencyRec(agencyList l, char * agency, size_t id, size_t infIdx, infractionSystemADT system)
 {
     int cmp;
 
@@ -311,8 +311,6 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
         // Create new node
         agencyList newAgency = malloc(sizeof(struct agency));
         newAgency->name = copyString(agency);
-        newAgency->tickets = malloc(BLOCK_TICKETS * sizeof(size_t));
-        newAgency->tickets[0] = idx;
         newAgency->qtyTickets = 1;
         newAgency->countInf = malloc(system->qtyInfractions * sizeof(infractionCounter));
 
@@ -339,7 +337,7 @@ static agencyList addAgencyRec(agencyList l, char * agency, size_t idx, size_t i
         return l;
     }
 
-    l->next = addAgencyRec(l->next, agency, idx, infIdx, system);
+    l->next = addAgencyRec(l->next, agency, id, infIdx, system);
     return l;
 }
 
@@ -349,58 +347,172 @@ void addAgency(infractionSystemADT system, char * agency, size_t id)
     system->agencyList = addAgencyRec(system->agencyList, agency, id, infIdx, system);
 }
 
-static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
+static carList addCarList(carList list, char *plate, infractionSystemADT system, size_t idx)
 {
     int cmp;
+    carList prev, current = list;
 
-    if (l == NULL ||(cmp = strcmp(l->plate, plate)) > 0)
+    // Search for the plate
+    while(current != NULL && (cmp = strcmp(current->plate, plate)) < 0)
     {
-        carList aux = malloc(sizeof(struct car));
-        aux->plate = copyString(plate);
-        aux->counter = 1;
-        aux->next = l;
-
-        if (system->infractions[idx].biggest == NULL)
-        {
-            system->infractions[idx].biggest = aux;
-        }
-
-        else if(aux->counter == system->infractions[idx].biggest->counter && strcmp(aux->plate,system->infractions[idx].biggest->plate) < 0)
-        {
-            system->infractions[idx].biggest = aux;
-        }
-        return aux;
+        prev = current;
+        current = current->next;
     }
 
-    if (cmp == 0)
+    if (current != NULL && cmp == 0)
     {
-        l->counter++;
+        current->counter++;
 
-        if (l->counter > system->infractions[idx].biggest->counter)
+        if (!system->infractions[idx].biggest || (current->counter > system->infractions[idx].biggest->counter || (current->counter == system->infractions[idx].biggest->counter && strcmp(current->plate, system->infractions[idx].biggest->plate) < 0)))
         {
-            system->infractions[idx].biggest = l;
+            system->infractions[idx].biggest = current;
         }
 
-        else if(l->counter == system->infractions[idx].biggest->counter && strcmp(l->plate,system->infractions[idx].biggest->plate) < 0)
-        {
-            system->infractions[idx].biggest = l;
-        }
-
-        return l;
+        return list;
     }
 
-    l->next = addCarRec(l->next, plate,system,idx);
-    return l;
+    carList newCar = malloc(sizeof(struct car));
+    checkMemory(newCar);
+
+    newCar->plate = copyString(plate);
+    newCar->counter = 1;
+    newCar->next = current;
+
+    if (current == list)
+    {
+        list = newCar;
+        newCar->next = NULL;
+        if (!system->infractions[idx].biggest || (system->infractions[idx].biggest->counter == 0 || (system->infractions[idx].biggest->counter == 1 && strcmp(newCar->plate, system->infractions[idx].biggest->plate) < 0)))
+        {
+            system->infractions[idx].biggest = newCar;
+        }
+    }
+
+    else
+    {
+        prev->next = newCar;
+    }
+
+    return list;
 }
+
+
+
+//static carList addCarRec(carList l, char * plate, infractionSystemADT system, size_t idx)
+//{
+//    int cmp;
+//
+//    if (l == NULL ||(cmp = strcmp(l->plate, plate)) > 0)
+//    {
+//        carList aux = malloc(sizeof(struct car));
+//        aux->plate = copyString(plate);
+//        aux->counter = 1;
+//        aux->next = l;
+//
+//        if (system->infractions[idx].biggest == NULL || (aux->counter == system->infractions[idx].biggest->counter && strcmp(aux->plate,system->infractions[idx].biggest->plate) < 0))
+//        {
+//            system->infractions[idx].biggest = aux;
+//        }
+//
+//        return aux;
+//    }
+//
+//    if (cmp == 0)
+//    {
+//        l->counter++;
+//
+//        if (l->counter > system->infractions[idx].biggest->counter || (l->counter == system->infractions[idx].biggest->counter && strcmp(l->plate,system->infractions[idx].biggest->plate) < 0))
+//        {
+//            system->infractions[idx].biggest = l;
+//        }
+//
+//        return l;
+//    }
+//
+//    l->next = addCarRec(l->next, plate,system,idx);
+//    return l;
+//}
+
+
+//static carList addCarList()
+//{
+//    int cmp;
+//    if ( l == NULL || (cmp= strcmp(l->plate,plate) > 0)){
+//        carList aux= malloc((sizeof (struct car)));
+//
+//        aux->next= l;
+//        return aux;
+//    }
+//
+//    if (cmp == 0){
+//
+//    }
+//
+//    l->next=addCarList(l->next,)
+//}
+
+
+
+//static carList addCarList(carList list, char *plate, infractionSystemADT system, size_t idx)
+//{
+//    int cmp;
+//    carList prev, current = list;
+//
+//    // Search for the plate
+//    while(current != NULL && (cmp = strcmp(current->plate, plate)) < 0)
+//    {
+//        prev = current;
+//        current = current->next;
+//    }
+//
+//    if (current != NULL && cmp == 0)
+//    {
+//        current->counter++;
+//
+//        if (current->counter > system->infractions[idx].biggest->counter || (current->counter == system->infractions[idx].biggest->counter && strcmp(current->plate, system->infractions[idx].biggest->plate) < 0))
+//        {
+//            system->infractions[idx].biggest = current;
+//        }
+//
+//        return list;
+//    }
+//
+//    carList newCar = malloc(sizeof(struct car));
+//    checkMemory(newCar);
+//
+//    newCar->plate = copyString(plate);
+//    newCar->counter = 1;
+////    newCar->next=current;
+//
+//    if (current == list)
+//    {
+//        list = newCar;
+//        newCar->next = NULL;
+//        if (system->infractions[idx].biggest->counter == 0 || (system->infractions[idx].biggest->counter == 1 && strcmp(newCar->plate, system->infractions[idx].biggest->plate) < 0))
+//        {
+//            system->infractions[idx].biggest = newCar;
+//        }
+//    }
+//
+//    else
+//    {
+//        carList aux = prev->next;
+//        prev->next = newCar;
+//        newCar->next = aux;
+//    }
+//
+//    return list;
+//}
+
 
 void addInfraction(infractionSystemADT system, char * plate, size_t id)
 {
+    // Todo: no entiendo porque con char no funciona
+    int p = plate[0];
     int idx = binarySearchRec(system->infractions, 0, system->qtyInfractions - 1, id);
-
     system->infractions[idx].qty++;
-    system->infractions[idx].carList = addCarRec(system->infractions[idx].carList, plate, system, idx);
+    system->infractions[idx].vec[p] = addCarList(system->infractions[idx].vec[p], plate, system, idx);
 }
-
 
 void addTicket(infractionSystemADT system, char * date, char * plate, char * agency, size_t fine, size_t id)
 {
@@ -475,10 +587,6 @@ void printAgencies(infractionSystemADT system)
         printf("Agency Max Infraction: %s\n", system->agencyList[i].max->name);
         printf("Agency Max Infraction Counter: %lu\n", system->agencyList[i].max->counter);
         puts("Agency Tickets:");
-        for (size_t j = 0; j < system->agencyList[i].qtyTickets; j++)
-        {
-            printf("Ticket Index: %lu\n", system->agencyList[i].tickets[j]);
-        }
         puts("Agency Infractions:");
         for (size_t j = 0; j < system->qtyInfractions; j++)
         {
