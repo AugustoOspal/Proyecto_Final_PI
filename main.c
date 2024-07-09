@@ -5,8 +5,8 @@
 int main(int argc, char *argv[])
 {
     // BORRAR DESPUES!!!!!!!!
-    argv[1] = "../DataSets/ticketsNYC15000000.csv";
-    argv[2] = "../DataSets/infractionsNYC.csv";
+//    argv[1] = "../DataSets/ticketsNYC15000000.csv";
+//    argv[2] = "../DataSets/infractionsNYC.csv";
 
     validateCommandLine(argc);
     validateFiles(argc, argv);
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     infractionMap mapInfraction = {0, 1, 2};
 #elif defined(CHI)
     ticketMap mapTicket = {1, 0, 2, 4, 3, 5};
-    infractionsMap mapInfraction = {0, 1, 2};
+    infractionMap mapInfraction = {0, 1, 2};
 #else
     puts(ERROR_INVALID_CITY_CODE_M);
     return ERROR_INVALID_CITY_CODE;
@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
     infractionSystemADT city = makeNewInfractionSystem();
     loadInfractions(city, infractions, mapInfraction);
     loadTickets(city, tickets, mapTicket);
+
+
 
     freeInfractionSystem(city);
 

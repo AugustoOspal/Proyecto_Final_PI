@@ -16,6 +16,7 @@ void validateFiles(int argc, char *argv[])
         FILE *file = fopen(argv[i], "r");
         if (!file)
         {
+            fclose(file);
             puts(ERROR_EMPTY_FILE_M);
             exit(ERROR_EMPTY_FILE);
         }
@@ -23,3 +24,5 @@ void validateFiles(int argc, char *argv[])
         fclose(file);
     }
 }
+
+

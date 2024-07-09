@@ -65,6 +65,8 @@ class infractionSystem
 {
     infraction infractions[]
     agency *agencyList
+    agency *currentAgency
+    size_t idxActualInfraction
     size_t qtyInfractions
     size_t qtyTickets
     size_t qtyAgencies

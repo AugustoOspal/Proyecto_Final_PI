@@ -5,6 +5,7 @@
 #define BLOCK_IDX 255
 #define INITIALS 5000
 #define HASHSIZE 5000
+#define HASHAUX 31
 
 
 // ERROR CODES
@@ -45,7 +46,6 @@ typedef struct infractionCounter
     char *name;
 }infractionCounter;
 
-
 typedef struct agency
 {
     char *name;
@@ -61,6 +61,8 @@ typedef struct infractionSystemCDT
 {
     infraction * infractions;
     agency * agencyList;
+    agency * currentAgency;
+    size_t idxCurrentInfraction;
     size_t qtyInfractions;
     size_t qtyTickets;
     size_t qtyAgencies;
@@ -71,10 +73,15 @@ typedef struct infractionNode
     size_t id;
     size_t qty;
     char *name;
-    car *carList;
-    car *biggest;
     struct infractionNode *tail;
 }infractionNode;
+
+typedef struct infractionsCDT
+{
+    infractionNode *infractionList;
+    infractionNode *current;
+    size_t qtyInfractions;
+}infractionsCDT;
 
 typedef struct infractionNode *infractionList;
 
@@ -85,7 +92,7 @@ static size_t hash(char *s)
     size_t hashval;
     for (hashval = 0; *s != '\0'; s++)
     {
-        hashval = *s + 31 * hashval;
+        hashval = *s + HASHAUX * hashval;
     }
 
     return hashval % HASHSIZE;
@@ -110,12 +117,13 @@ static char * copyString(const char *string)
     return newString;
 }
 
+// Use binary search to find the position of the infraction
 static size_t binarySearchRec(infraction arr[], size_t low, size_t high, size_t target)
 {
     // Target not found
     if (high < low)
     {
-        return (size_t)-1;
+        return (size_t) - 1;
     }
 
     size_t mid = low + (high - low) / 2;
@@ -206,8 +214,6 @@ static infractionList loadInfraction(infractionList infractionL, size_t id, char
 
         newNode->id = id;
         newNode->name = copyString(name);
-        newNode->biggest = NULL;
-        newNode->carList = NULL;
         newNode->qty = 0;
         newNode->tail = infractionL;
         return newNode;
@@ -453,4 +459,99 @@ void freeInfractionSystem(infractionSystemADT system)
     freeAgencyList(system->agencyList);
 
     free(system);
+}
+
+
+size_t getQtyTickets(infractionSystemADT system)
+{
+    return system->qtyTickets;
+}
+
+size_t getQtyInfractions(infractionSystemADT system)
+{
+    return system->qtyInfractions;
+}
+
+
+
+void infractionToBegining(infractionSystemADT system)
+{
+    system->idxCurrentInfraction = 0;
+}
+
+int hasNextInfraction(infractionSystemADT system)
+{
+    return system->idxCurrentInfraction < system->qtyInfractions;
+}
+
+void setNextInfraction(infractionSystemADT system)
+{
+    system->idxCurrentInfraction++;
+}
+
+char * getInfractionName(infractionSystemADT system)
+{
+    return copyString(system->infractions[system->idxCurrentInfraction].name);
+}
+
+size_t getInfractionID(infractionSystemADT system)
+{
+    return system->infractions[system->idxCurrentInfraction].id;
+}
+
+size_t getInfractionQty(infractionSystemADT system)
+{
+    return system->infractions[system->idxCurrentInfraction].qty;
+}
+
+char *getPlateWithTheMostInfractions(infractionSystemADT system, size_t *qty)
+{
+    if (system->infractions[system->idxCurrentInfraction].biggest)
+    {
+        *qty = system->infractions[system->idxCurrentInfraction].biggest->counter;
+        return copyString(system->infractions[system->idxCurrentInfraction].biggest->plate);
+    }
+
+    *qty = 0;
+    return NULL;
+}
+
+void agencyToBegining(infractionSystemADT system)
+{
+    system->currentAgency = system->agencyList;
+}
+
+int hasNextAgency(infractionSystemADT system)
+{
+    return system->currentAgency != NULL;
+}
+
+void setNextAgency(infractionSystemADT system)
+{
+    if (system && system->currentAgency)
+    {
+        system->currentAgency = system->currentAgency->next;
+    }
+}
+
+char *getAgencyName(infractionSystemADT system)
+{
+    if (system && system->currentAgency)
+    {
+        return copyString(system->currentAgency->name);
+    }
+
+    return NULL;
+}
+
+size_t getMostPopularInfractionForAgency(infractionSystemADT system, size_t *qty)
+{
+    if (system && system->currentAgency)
+    {
+        *qty = system->currentAgency->max->counter;
+        return system->currentAgency->max->id;
+    }
+
+    *qty = 0;
+    return 0;
 }

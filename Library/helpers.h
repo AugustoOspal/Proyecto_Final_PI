@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../main.h"
+#include "../Library/infractionSystemADT.h"
 
 void validateCommandLine(int argc);
 void validateFiles(int argc, char *argv[]);
