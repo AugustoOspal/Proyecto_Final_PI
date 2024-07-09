@@ -1,6 +1,40 @@
 #include "helpers.h"
 #include "htmlTable.h"
 
+static void checkMemory(void *pointer)
+{
+    if (!pointer || errno == ENOMEM)
+    {
+        puts(ERROR_ALLOCATING_MEMORY_M);
+        exit(ERROR_ALLOCATING_MEMORY);
+    }
+}
+
+char *size_tToString(size_t num)
+{
+    int digits = (num == 0);
+    size_t aux = num;
+
+    while(aux > 0)
+    {
+        digits++;
+        aux /= 10;
+    }
+
+    errno = 0;
+    char * out = malloc((digits + 1) * sizeof(char));
+    checkMemory(out);
+
+    for(int i = (digits - 1); i >= 0; i--)
+    {
+        out[i] = num % 10 + '0';
+        num /= 10;
+    }
+
+    out[digits] = 0;
+    return out;
+}
+
 int checkFile(FILE *file)
 {
     if (!file)
@@ -56,13 +90,16 @@ void loadQuery1(infractionSystemADT system)
     while (hasNextInfraction(system))
     {
         size_t qty = getQtyTickets(system);
+
+        char *qtyS = size_tToString(qty);
         char *name = getInfractionName(system);
 
-        addHTMLRow(table, name, qty);
+        addHTMLRow(table, name, qtyS);
         fprintf(fileCSV, "%s;%lu\n", name, qty);
         setNextInfraction(system);
 
         free(name);
+        free(qtyS);
     }
 
     closeHTMLTable(table);
@@ -92,13 +129,15 @@ void loadQuery2(infractionSystemADT system)
         size_t qty;
         char *agency = getAgencyName(system);
         char *infraction = getMostPopularInfractionForAgency(system, &qty);
+        char *qtyS = size_tToString(qty);
 
         setNextAgency(system);
-        addHTMLRow(table, agency, infraction, qty);
+        addHTMLRow(table, agency, infraction, qtyS);
         fprintf(fileCSV, "%s;%s;%lu\n", agency, infraction, qty);
 
         free(agency);
         free(infraction);
+        free(qtyS);
     }
 
     closeHTMLTable(table);
@@ -128,13 +167,17 @@ void loadQuery3(infractionSystemADT system)
         size_t qty;
         char *name = getInfractionName(system);
         char *plate = getPlateWithTheMostInfractions(system, &qty);
+        char *qtyS = size_tToString(qty);
         if (plate && name)
         {
-            addHTMLRow(table, name, plate, qty);
-            fprintf(file, "%s;%s;%lu\n", getInfractionName(system), plate, qty);
-            free(plate);
-            free(name);
+            addHTMLRow(table, name, plate, qtyS);
+            fprintf(file, "%s;%s;%lu\n", name, plate, qty);
         }
+
+        free(plate);
+        free(name);
+        free(qtyS);
+
         setNextInfraction(system);
     }
 

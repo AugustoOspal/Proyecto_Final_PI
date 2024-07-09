@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
     loadInfractions(city, infractions, mapInfraction);
     loadTickets(city, tickets, mapTicket);
 
-//    loadQuery1(city);
-//    loadQuery2(city);
-//    loadQuery3(city);
+    loadQuery1(city);
+    loadQuery2(city);
+    loadQuery3(city);
 
     freeInfractionSystem(city);
 
