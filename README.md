@@ -39,6 +39,12 @@ make helpers.o: compiles the helpers library
 
 make clean: deletes the .out and .o files from the main directory
 
+## Prerequisites
+- gcc
+- make
+- plantUML (optional)
+
+
 ## How to run the proyect
 
 - 1: We have to go to the directory of the project
