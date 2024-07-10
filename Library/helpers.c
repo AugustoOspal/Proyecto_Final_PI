@@ -51,7 +51,7 @@ void validateCommandLine(int argc)
 {
     if (argc != NUMBER_INPUT_FILES + 1)
     {
-        puts(ERROR_NUMBER_INPUT_FILES_M);
+        fprintf(stderr, "%s\n", ERROR_NUMBER_INPUT_FILES_M);
         exit(ERROR_NUMBER_INPUT_FILES);
     }
 }
@@ -72,19 +72,10 @@ void loadQuery1(infractionSystemADT system)
     htmlTable table =  newTable("query1.html", 2, "infraction", "tickets");
 
     checkFile(fileCSV);
-    if (!table)
-    {
-        // Todo: mensaje de error
-    }
-
     fprintf(fileCSV, "%s\n", HEADER_LINE_QUERRY1);
 
     // This one already checks if the system or infractions is empty
-    if (!sortInfractions(system))
-    {
-        // Todo: mensaje de error
-    }
-
+    sortInfractions(system);
     infractionToBegining(system);
 
     while (hasNextInfraction(system))
@@ -112,18 +103,9 @@ void loadQuery2(infractionSystemADT system)
     htmlTable table = newTable("query2.html", 3, "issuingAgency", "infraction", "tickets");
 
     checkFile(fileCSV);
-    if (!table)
-    {
-        // Todo: mensaje de error
-    }
-
     fprintf(fileCSV, "%s\n", HEADER_LINE_QUERRY2);
 
-    if (!agencyToBegining(system))
-    {
-        // Todo: mensaje de error
-    }
-
+    agencyToBegining(system);
     while (hasNextAgency(system))
     {
         size_t qty;
@@ -150,18 +132,9 @@ void loadQuery3(infractionSystemADT system)
     htmlTable table = newTable("query3.html", 3, "infraction", "plate", "tickets");
 
     checkFile(file);
-    if (!table)
-    {
-        // Todo: mensaje de error
-    }
-
     fprintf(file, "%s\n", HEADER_LINE_QUERRY3);
 
-    if (!infractionToBegining(system))
-    {
-        // Todo: mensaje de error
-    }
-
+    infractionToBegining(system);
     while (hasNextInfraction(system))
     {
         size_t qty;

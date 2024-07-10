@@ -389,7 +389,7 @@ size_t loadInfractions(infractionSystemADT system, FILE *infractions, infraction
 
         if (qtyTokens != map.fields)
         {
-            puts(ERROR_INVALID_NUMBER_FIELDS_M);
+            fprintf(stderr, "Incorrect file for this position\n");
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
@@ -399,12 +399,6 @@ size_t loadInfractions(infractionSystemADT system, FILE *infractions, infraction
         counter++;
 
         free(tokens);
-    }
-
-    if (!infractionsL)
-    {
-        // Todo: aca da error porque el archivo no tenia infracciones
-        // solo el header
     }
 
     infraction *infractionVec = malloc(sizeof(infraction) * counter);
@@ -456,7 +450,7 @@ size_t loadTickets(infractionSystemADT system, FILE *ticketsFile, ticketMap map)
 
         if (qtyTokens != map.fields)
         {
-            puts(ERROR_INVALID_NUMBER_FIELDS_M);
+            fprintf(stderr, "Incorrect file for this position\n");
             exit(ERROR_INVALID_NUMBER_FIELDS);
         }
 
