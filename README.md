@@ -55,4 +55,5 @@ make clean: deletes the .out and .o files from the main directory
   - Work email: aospalmadeo@itba.edu.ar
   - Personal email: augustoospal@gmail.com
 - Lucas Rodriguez
+  - Work email: lrodrigueznahuel@itba.edu.ar 
   - github: 1ucasrn
